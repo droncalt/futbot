@@ -65,7 +65,7 @@ class Repositorio {
 
   Future<void> iniciar() async {
     final pref = await SharedPreferences.getInstance();
-    urlBase = pref.getString(_kUrl) ?? '';
+    urlBase = pref.getString(_kUrl) ?? 'https://droncalt.github.io/futbot/';
     final guardado = pref.getString(_kPaquete);
     final f = pref.getString(_kFecha);
     descargado = f == null ? null : DateTime.tryParse(f);
