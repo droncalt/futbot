@@ -15,7 +15,6 @@ informes/
 datos/raw/
 datos/modelos/
 datos/jugadores/
-datos/escudos/*.png
 datos/registro_descargas.csv
 datos/evaluacion/predicciones_*.csv
 datos/evaluacion/resumen_2*.json
