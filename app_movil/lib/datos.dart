@@ -57,6 +57,7 @@ class Linea {
 }
 
 class Repositorio {
+  static const urlNube = 'https://droncalt.github.io/futbot/';
   static const _kUrl = 'url_base', _kPaquete = 'paquete', _kFecha = 'paquete_descargado';
   Map<String, dynamic> paquete = {};
   String urlBase = '';
@@ -65,22 +66,35 @@ class Repositorio {
 
   Future<void> iniciar() async {
     final pref = await SharedPreferences.getInstance();
-    urlBase = pref.getString(_kUrl) ?? 'https://droncalt.github.io/futbot/';
+    final u = pref.getString(_kUrl) ?? '';
+    urlBase = u.isEmpty ? urlNube : u; // una versión vieja guardaba la dirección vacía
     final guardado = pref.getString(_kPaquete);
     final f = pref.getString(_kFecha);
     descargado = f == null ? null : DateTime.tryParse(f);
     if (guardado != null) {
-      paquete = jsonDecode(guardado);
-      origen = 'guardado';
-    } else {
-      paquete = jsonDecode(await rootBundle.loadString('assets/paquete/paquete.json'));
-      origen = 'incluido en la app';
+      try {
+        paquete = Map<String, dynamic>.from(jsonDecode(guardado));
+        lineas('segura'); // valida que se pueda leer; si no, se descarta
+        origen = 'guardado';
+        return;
+      } catch (_) {
+        await pref.remove(_kPaquete);
+        descargado = null;
+      }
     }
+    await iniciarIncluido();
+  }
+
+  /// Usa el paquete que viene dentro de la app (respaldo si el guardado está dañado).
+  Future<void> iniciarIncluido() async {
+    paquete = Map<String, dynamic>.from(jsonDecode(await rootBundle.loadString('assets/paquete/paquete.json')));
+    origen = 'incluido en la app';
   }
 
   Future<void> guardarUrl(String url) async {
     var u = url.trim();
-    if (u.isNotEmpty && !u.endsWith('/')) u = '$u/';
+    if (u.isEmpty) u = urlNube;
+    if (!u.endsWith('/')) u = '$u/';
     urlBase = u;
     (await SharedPreferences.getInstance()).setString(_kUrl, u);
   }
@@ -92,6 +106,7 @@ class Repositorio {
     if (urlBase.isEmpty) return 'Configura primero la dirección de datos en Ajustes.';
     try {
       final r = await http.get(Uri.parse('${urlBase}paquete.json')).timeout(const Duration(seconds: 30));
+      print('FutBot actualizar: HTTP ${r.statusCode} ${r.bodyBytes.length} bytes');
       if (r.statusCode != 200) return 'No se pudo descargar (HTTP ${r.statusCode}).';
       final texto = utf8.decode(r.bodyBytes);
       final nuevo = jsonDecode(texto);
@@ -104,6 +119,7 @@ class Repositorio {
       await pref.setString(_kFecha, descargado!.toIso8601String());
       return 'Datos actualizados (${paquete['generado_peru'] ?? ''}).';
     } catch (e) {
+      print('FutBot actualizar: $e');
       return 'Sin conexión: sigo con los datos guardados.';
     }
   }

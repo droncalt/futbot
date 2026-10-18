@@ -34,6 +34,9 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // R8 rompía shared_preferences (NoSuchMethodError / kotlin.Result) → pantalla en blanco al iniciar
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
