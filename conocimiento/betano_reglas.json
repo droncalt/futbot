@@ -1,0 +1,147 @@
+{
+  "fuente": "Centro de ayuda oficial de Betano Perú (support.betano.pe)",
+  "consultado": "2026-10-17",
+  "aviso": "Resúmenes propios de las páginas oficiales. Betano puede cambiar sus reglas sin aviso: ante la duda, manda la página oficial.",
+  "reglas": [
+    {
+      "id": "pago_anticipado",
+      "titulo": "2 Goles de Ventaja (Pago Anticipado)",
+      "claves": ["pago anticipado", "2 goles", "dos goles", "ventaja", "early payout", "ganado con pago"],
+      "texto": "Si el equipo que elegiste se pone 2 goles arriba en cualquier momento del partido, Betano paga la selección como ganada aunque luego le empaten o le remonten. Solo vale en los partidos y mercados de fútbol que Betano marca para esta oferta. Sirve en simples, combinadas, sistemas y Bet Builder. Puede no sumarse con Apuesta Gratis o Misiones, y no aplica si tu cuenta tiene restricciones.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/38347366234653"
+    },
+    {
+      "id": "multi_bono",
+      "titulo": "Multi Bono (bono por combinadas)",
+      "claves": ["multi bono", "multibono", "bono combinada", "bono por combinada", "extra combinada", "boost combinada"],
+      "texto": "Si tu combinada gana, Betano suma un bono sobre las ganancias según el número de selecciones. En fútbol: dobles 0 %, triples 5 %, 4 selecciones 10 %, 5 → 15 %, 6 → 20 %, 7 → 25 %, 8 → 30 %, 9 → 35 %, 10 → 40 %… hasta 200 % con 25 a 30 selecciones (tope S/250 000). Cada selección debe tener cuota de 1.50 o más, la apuesta debe hacerse antes del partido y no se permiten sistemas. Mercados de fútbol válidos: Resultado del partido, Total de goles Más/Menos, Ambos equipos anotan, Más/Menos y Resultado del 1.er tiempo, Ambos anotan o Más de 2.5, Marcador correcto. Ligas válidas, entre otras: Liga 1 y Liga 2 de Perú, Premier League, Championship, League One y Two, LaLiga y Segunda, Serie A y B, Bundesliga y 2. Bundesliga, Ligue 1 y 2, Primeira Liga, Eredivisie, Brasileirão A y B, Liga MX, MLS, Champions, Europa y Conference League, Libertadores y Sudamericana. No aplica con SuperCuotas ni con Apuesta Gratis, y se pierde si alguna selección se anula o se posterga.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/38347974699549"
+    },
+    {
+      "id": "seguro_betano",
+      "titulo": "Seguro Betano (pierdes por una)",
+      "claves": ["seguro", "seguro betano", "pierdo por una", "falla una", "reembolso combinada", "insurance"],
+      "texto": "Si una combinada falla por UNA sola selección, Betano devuelve lo apostado en saldo real. Requisitos: de 5 a 20 selecciones, cada una con cuota de 1.65 o más, solo en Resultado del partido (1X2), Más/Menos goles y Ambos anotan de las competiciones principales. No aplica a Bet Builder, Cash Out, SuperCuotas, apuestas con bono o Apuesta Gratis, y se invalida si algún partido se anula o se posterga.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7411798077725"
+    },
+    {
+      "id": "bet_builder",
+      "titulo": "Bet Builder (crear apuesta)",
+      "claves": ["bet builder", "betbuilder", "crear apuesta", "creador de apuesta", "mismo partido", "varias del mismo partido"],
+      "texto": "Combina de 2 a 13 mercados de un MISMO partido de fútbol en una sola selección con una cuota propia (no es el producto de las cuotas sueltas, porque los mercados están relacionados). Si eliges dos mercados compatibles del mismo partido, el cupón los junta solo. Si una de sus selecciones se anula, se anula todo el Bet Builder (T&C 15.5). Existe además el Bet Builder Boost: un % extra sobre las ganancias en partidos elegidos, si cumples el mínimo de selecciones, la cuota mínima por selección y la cuota total mínima de la campaña.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7468762144029"
+    },
+    {
+      "id": "cash_out",
+      "titulo": "Cash Out",
+      "claves": ["cash out", "cashout", "cerrar apuesta", "retirar apuesta", "cobrar antes"],
+      "texto": "Permite cerrar la apuesta antes de que termine el partido (antes o durante el evento) para asegurar parte de la ganancia o cortar la pérdida, en simples y combinadas de mercados seleccionados. Puede tardar unos segundos, fallar si la cuota cambia o el mercado se suspende, y no se puede usar justo después de apostar. Las apuestas cerradas con Cash Out no cuentan para bonos ni promociones, y Betano no garantiza que siempre esté disponible. Ojo: el Cash Out paga menos que el valor justo; usarlo seguido reduce tus ganancias a largo plazo.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7468797382685"
+    },
+    {
+      "id": "regla_90",
+      "titulo": "Regla de los 90 minutos",
+      "claves": ["90 minutos", "noventa", "tiempo extra", "prorroga", "penales", "tiempo añadido", "descuento", "alargue"],
+      "texto": "Los mercados de partido completo (1X2, Más/Menos goles, Ambos anotan, hándicap…) se liquidan con el resultado de los 90 minutos más el tiempo de descuento. La prórroga y los penales NO cuentan, aunque decidan quién pasa, salvo que el mercado diga lo contrario. Los mercados del 1.er tiempo se liquidan con el marcador del descanso.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/36796490326173"
+    },
+    {
+      "id": "tarjetas",
+      "titulo": "Cómo cuentan las tarjetas",
+      "claves": ["tarjeta", "tarjetas", "roja", "amarilla", "segunda amarilla", "expulsion"],
+      "texto": "Regla 3.1.62: amarilla = 1, roja = 2, y la segunda amarilla no se cuenta por separado (máximo 3 por jugador). Solo cuentan las mostradas a jugadores en el campo durante los 90 minutos + descuento; no las del banco, cuerpo técnico ni las mostradas después del final. Se liquidan con el informe oficial de la liga.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/36520716638877"
+    },
+    {
+      "id": "corners",
+      "titulo": "Cómo cuentan los córners",
+      "claves": ["corner", "corners", "córner", "córners", "tiro de esquina", "esquinas"],
+      "texto": "Solo cuentan los córners realmente ejecutados en los 90 minutos + descuento. Si el árbitro concede un córner y pita el final antes de que se saque, no cuenta. Se liquidan con el informe oficial de la competición.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/36520716638877"
+    },
+    {
+      "id": "liquidacion",
+      "titulo": "Con qué datos liquida Betano",
+      "claves": ["liquida", "liquidacion", "opta", "estadisticas", "flashscore", "sofascore", "tiros al arco", "remates"],
+      "texto": "Goles, remates, remates al arco, asistencias y demás estadísticas se liquidan con datos de Opta; córners y tarjetas, con el informe oficial de la liga. Betano NO usa Google, Sofascore, Flashscore ni otras casas para liquidar. Un remate al arco incluye los goles, las atajadas y los bloqueos del último defensor.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/35942281162013"
+    },
+    {
+      "id": "postergado",
+      "titulo": "Partido postergado, cancelado o suspendido",
+      "claves": ["posterg", "aplaz", "cancela", "suspend", "abandon", "no se jugo", "no se juega", "lluvia"],
+      "texto": "Si el partido no se juega dentro de las 24 horas del horario original, la apuesta se anula y se devuelve. En una combinada, la selección anulada pasa a cuota 1.00 y el resto sigue (una combinada de 4 queda como triple). Si el partido se abandona, se anula todo salvo lo que ya estaba decidido (por ejemplo, un Más de 1.5 que ya tenía 2 goles se paga como ganado).",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7468882259869"
+    },
+    {
+      "id": "anulada",
+      "titulo": "Selección anulada",
+      "claves": ["anulada", "anulado", "nula", "cuota 1.00", "void", "no compitio", "no jugo"],
+      "texto": "En una simple te devuelven lo apostado. En una combinada, esa selección vale 1.00 y las demás siguen con sus cuotas. En un Bet Builder, si una selección se anula, se anula todo el Bet Builder. Con «Anular jugadores no titulares» activo (por defecto), si tu jugador no sale de titular su selección se anula.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/38361766676765"
+    },
+    {
+      "id": "montos",
+      "titulo": "Apuesta mínima y máxima",
+      "claves": ["minimo", "minima", "monto minimo", "apuesta minima", "maximo", "maxima", "cuanto puedo apostar", "limite de apuesta", "boton max"],
+      "texto": "La apuesta mínima en Perú es S/0.50 en la mayoría de mercados. La máxima no es fija: depende del mercado y del evento; el botón «MAX» del cupón te muestra el tope. Betano también puede poner un límite de apuesta a tu cuenta (cláusula 9.31 de sus T&C) y lo revisa periódicamente.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7468309484573"
+    },
+    {
+      "id": "limite_ganancia",
+      "titulo": "Límite de ganancia por apuesta",
+      "claves": ["limite de ganancia", "ganancia maxima", "tope de ganancia", "pago maximo"],
+      "texto": "Toda apuesta tiene un tope de ganancia que depende del deporte, mercado y competición; si tu ganancia potencial lo supera, el sistema la ajusta. En combinadas manda el límite más bajo.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7468337955741"
+    },
+    {
+      "id": "pago_ticket",
+      "titulo": "Cómo se calcula el pago",
+      "claves": ["como se calcula", "pago", "ganancia", "cuanto gano", "cuota total", "multiplica"],
+      "texto": "Pago total = monto × cuota (en combinadas, monto × cuota 1 × cuota 2 × …). La ganancia neta es el pago total menos lo apostado. Ejemplo: S/10 a 1.50 × 2.00 × 1.80 = S/54 de pago y S/44 de ganancia neta.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/38361766676765"
+    },
+    {
+      "id": "btts_o25",
+      "titulo": "Ambos equipos anotan o Más de 2.5",
+      "claves": ["ambos anotan o mas", "ambos equipos anotan o", "btts o mas"],
+      "texto": "Un solo mercado con Sí o No. «Sí» gana si anotan los dos equipos O si hay 3 o más goles. «No» solo gana con 0-0, 1-0, 2-0, 0-1 o 0-2.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7469063268893"
+    },
+    {
+      "id": "supercuotas",
+      "titulo": "SuperCuotas",
+      "claves": ["supercuotas", "super cuotas", "sc", "sin comision"],
+      "texto": "Oferta diaria: en partidos marcados con «SC», Betano quita su comisión del Resultado Final (1X2) antes del partido, así que la cuota es más alta. No cuentan para requisitos de otras promociones ni para Multi Bono o Seguro Betano.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7411954215197"
+    },
+    {
+      "id": "empate_aburrido",
+      "titulo": "Empate Aburrido",
+      "claves": ["empate aburrido", "0-0", "cero a cero"],
+      "texto": "Si el partido termina 0-0, Betano devuelve lo apostado en Marcador correcto y en Medio tiempo/Tiempo completo (solo prepartido). En una combinada, esa selección pasa a cuota 1.00.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7411753808029"
+    },
+    {
+      "id": "suplente_oro",
+      "titulo": "Suplente de Oro y ofertas de jugadores",
+      "claves": ["suplente de oro", "sustituto", "cambio de jugador", "sustitucion", "sale lesionado"],
+      "texto": "Suplente de Oro: en mercados de jugador marcados, si tu jugador sale, la apuesta pasa al que entra y conserva lo que ya llevaba (si iba 1 remate de 2, al suplente le falta 1). Sustitución antes del descanso: en mercados de jugador seleccionados, si sale antes del medio tiempo y la apuesta no estaba decidida, te devuelven lo apostado (no si fue expulsado).",
+      "url": "https://support.betano.pe/hc/es-pe/articles/33391121411101"
+    },
+    {
+      "id": "handicap",
+      "titulo": "Hándicap y Apuesta sin empate",
+      "claves": ["handicap", "hándicap", "asiatico", "europeo", "sin empate", "draw no bet", "empate no apuesta"],
+      "texto": "Hándicap: el equipo empieza con goles a favor o en contra y se mira el marcador ajustado. El europeo usa enteros e incluye el empate (sin devoluciones). El asiático elimina el empate y puede devolver todo o la mitad. Apuesta sin empate: si el partido termina empatado te devuelven lo apostado; equivale al hándicap asiático 0.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7469067774877"
+    },
+    {
+      "id": "prepartido_vivo",
+      "titulo": "Combinar prepartido y en vivo",
+      "claves": ["en vivo", "live", "prepartido", "pre partido", "combinar vivo"],
+      "texto": "Sí se pueden mezclar selecciones prepartido y en vivo en la misma combinada o sistema. Las cuotas en vivo pueden cambiar mientras confirmas.",
+      "url": "https://support.betano.pe/hc/es-pe/articles/7468655511069"
+    }
+  ]
+}

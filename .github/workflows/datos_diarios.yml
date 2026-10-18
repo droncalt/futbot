@@ -1,0 +1,59 @@
+# Calcula las súper boletas en la nube de GitHub (gratis) y las publica para la app del celular.
+# Corre 2 veces al día (6:00 y 18:00 hora de Perú) y también a mano desde la pestaña "Actions".
+name: Datos diarios FútBot
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  datos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # Guarda entre corridas lo ya descargado (temporadas cerradas, jugadores, escudos)
+      - uses: actions/cache@v4
+        with:
+          path: |
+            datos/raw
+            datos/jugadores
+            datos/escudos
+          key: datos-${{ github.run_id }}
+          restore-keys: datos-
+
+      - name: Instalar dependencias
+        run: pip install numpy scipy pandas requests truststore
+
+      - name: Descargar datos y ajustar modelos
+        run: python bot.py actualizar
+
+      - name: Armar el paquete para la app
+        run: python bot.py exportar
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: publicar
+
+      - id: publicar
+        uses: actions/deploy-pages@v4

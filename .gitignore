@@ -1,0 +1,26 @@
+# Archivo privado con la clave de API-Football: nunca se comparte
+.env
+__pycache__/
+
+# --- Privado: nunca se sube a GitHub ---
+datos/registro.sqlite
+datos/acceso.json
+datos/ia_memoria.json
+datos/ia_config.json
+datos/videos/
+videos_tipsters/
+informes/
+
+# --- Pesado o regenerable (la nube lo vuelve a descargar/calcular) ---
+datos/raw/
+datos/modelos/
+datos/jugadores/
+datos/escudos/*.png
+datos/registro_descargas.csv
+datos/evaluacion/predicciones_*.csv
+datos/evaluacion/resumen_2*.json
+publicar/
+app_movil/build/
+app_movil/.dart_tool/
+FutBot.apk
+*.apk

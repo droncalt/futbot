@@ -1,0 +1,329 @@
+{
+ "Panetolikos": {
+  "nombre": "Panetolikos",
+  "archivo": "panetolikos.png"
+ },
+ "Celtic": {
+  "nombre": "Celtic",
+  "archivo": "celtic.png"
+ },
+ "Celta": {
+  "nombre": "Celta de Vigo",
+  "archivo": "celta.png"
+ },
+ "Granada": {
+  "nombre": "Granada",
+  "archivo": "granada.png"
+ },
+ "Panathinaikos": {
+  "nombre": "Panathinaikos",
+  "archivo": "panathinaikos.png"
+ },
+ "Groningen": {
+  "nombre": "Groningen",
+  "archivo": "groningen.png"
+ },
+ "Le Havre": {
+  "nombre": "Le Havre",
+  "archivo": "le_havre.png"
+ },
+ "Lorient": {
+  "nombre": "Lorient",
+  "archivo": "lorient.png"
+ },
+ "Paris FC": {
+  "nombre": "Paris FC",
+  "archivo": "paris_fc.png"
+ },
+ "Cesena": {
+  "nombre": "Cesena",
+  "archivo": "cesena.png"
+ },
+ "M'gladbach": {
+  "nombre": "Borussia Mönchengladbach",
+  "intento": 1792338252.3615284,
+  "archivo": "mgladbach.png"
+ },
+ "Nott'm Forest": {
+  "nombre": "Nottingham Forest",
+  "intento": 1792338252.3615284,
+  "archivo": "nottm_forest.png"
+ },
+ "Milan": {
+  "nombre": "AC Milan",
+  "intento": 1792338252.3615284,
+  "archivo": "milan.png"
+ },
+ "Buyuksehyr": {
+  "nombre": "İstanbul Başakşehir",
+  "intento": 1792338252.3615284,
+  "archivo": "buyuksehyr.png"
+ },
+ "Malaga": {
+  "nombre": "Málaga",
+  "intento": 1792338252.3615284,
+  "archivo": "malaga.png"
+ },
+ "Girona": {
+  "nombre": "Girona",
+  "intento": 1792338252.3615284,
+  "archivo": "girona.png"
+ },
+ "Valladolid": {
+  "nombre": "Real Valladolid",
+  "intento": 1792338252.3615284,
+  "archivo": "valladolid.png"
+ },
+ "Kifisia": {
+  "nombre": "Kifisia",
+  "intento": 1792338252.3615284,
+  "archivo": "kifisia.png"
+ },
+ "Sampdoria": {
+  "nombre": "Sampdoria",
+  "intento": 1792338252.3615284,
+  "archivo": "sampdoria.png"
+ },
+ "PAOK": {
+  "nombre": "PAOK",
+  "intento": 1792338252.3615284,
+  "archivo": "paok.png"
+ },
+ "Nijmegen": {
+  "nombre": "NEC Nijmegen",
+  "intento": 1792338252.3615284,
+  "archivo": "nijmegen.png"
+ },
+ "Twente": {
+  "nombre": "Twente",
+  "intento": 1792338252.3615284,
+  "archivo": "twente.png"
+ },
+ "Lyon": {
+  "nombre": "Olympique de Lyon",
+  "intento": 1792338252.3615284,
+  "archivo": "lyon.png"
+ },
+ "Juventus": {
+  "nombre": "Juventus",
+  "intento": 1792338252.3615284,
+  "archivo": "juventus.png"
+ },
+ "Real Madrid": {
+  "nombre": "Real Madrid",
+  "intento": 1792338252.3615284,
+  "archivo": "real_madrid.png"
+ },
+ "Burgos": {
+  "nombre": "Burgos",
+  "intento": 1792338252.3615284,
+  "archivo": "burgos.png"
+ },
+ "Monza": {
+  "nombre": "Monza",
+  "intento": 1792338252.3615284,
+  "archivo": "monza.png"
+ },
+ "Trabzonspor": {
+  "nombre": "Trabzonspor",
+  "intento": 1792338252.3615284,
+  "archivo": "trabzonspor.png"
+ },
+ "Celta B": {
+  "nombre": "Celta B",
+  "intento": 1792338252.3615284,
+  "archivo": "celta_b.png"
+ },
+ "Rodez": {
+  "nombre": "Rodez",
+  "intento": 1792338252.3615284,
+  "archivo": "rodez.png"
+ },
+ "Parma": {
+  "nombre": "Parma",
+  "intento": 1792338252.3615284,
+  "archivo": "parma.png"
+ },
+ "Tottenham": {
+  "nombre": "Tottenham Hotspur",
+  "intento": 1792338252.3615284
+ },
+ "Getafe": {
+  "nombre": "Getafe",
+  "intento": 1792338252.3615284,
+  "archivo": "getafe.png"
+ },
+ "Sp Braga": {
+  "nombre": "Sporting Braga",
+  "intento": 1792338252.3615284,
+  "archivo": "sp_braga.png"
+ },
+ "Olympiakos": {
+  "nombre": "Olympiakos",
+  "intento": 1792338252.3615284,
+  "archivo": "olympiakos.png"
+ },
+ "Hearts": {
+  "nombre": "Hearts",
+  "intento": 1792338252.3615284,
+  "archivo": "hearts.png"
+ },
+ "Alaves": {
+  "nombre": "Alavés",
+  "intento": 1792338252.3615284,
+  "archivo": "alaves.png"
+ },
+ "Cadiz": {
+  "nombre": "Cádiz",
+  "intento": 1792338252.3615284,
+  "archivo": "cadiz.png"
+ },
+ "Asteras Tripolis": {
+  "nombre": "Asteras Tripolis",
+  "intento": 1792338252.3615284,
+  "archivo": "asteras_tripolis.png"
+ },
+ "Ajax": {
+  "nombre": "Ajax",
+  "intento": 1792338252.3615284,
+  "archivo": "ajax.png"
+ },
+ "Auxerre": {
+  "nombre": "Auxerre",
+  "intento": 1792338252.3615284,
+  "archivo": "auxerre.png"
+ },
+ "Monaco": {
+  "nombre": "AS Mónaco",
+  "intento": 1792338252.3615284,
+  "archivo": "monaco.png"
+ },
+ "Rennes": {
+  "nombre": "Rennes",
+  "intento": 1792338252.3615284,
+  "archivo": "rennes.png"
+ },
+ "Avellino": {
+  "nombre": "Avellino",
+  "intento": 1792338252.3615284,
+  "archivo": "avellino.png"
+ },
+ "Hoffenheim": {
+  "nombre": "Hoffenheim",
+  "intento": 1792338252.3615284,
+  "archivo": "hoffenheim.png"
+ },
+ "Arsenal": {
+  "nombre": "Arsenal",
+  "intento": 1792338252.3615284,
+  "archivo": "arsenal.png"
+ },
+ "Atalanta": {
+  "nombre": "Atalanta",
+  "intento": 1792338252.3615284,
+  "archivo": "atalanta.png"
+ },
+ "Gaziantep": {
+  "nombre": "Gaziantep",
+  "intento": 1792338252.3615284,
+  "archivo": "gaziantep.png"
+ },
+ "Sociedad": {
+  "nombre": "Real Sociedad",
+  "intento": 1792338252.3615284,
+  "archivo": "sociedad.png"
+ },
+ "Andorra": {
+  "nombre": "Andorra",
+  "intento": 1792338252.3615284,
+  "archivo": "andorra.png"
+ },
+ "Eldense": {
+  "nombre": "Eldense",
+  "intento": 1792338252.3615284,
+  "archivo": "eldense.png"
+ },
+ "Aris": {
+  "nombre": "Aris",
+  "intento": 1792338252.3615284,
+  "archivo": "aris.png"
+ },
+ "Arezzo": {
+  "nombre": "Arezzo",
+  "intento": 1792338252.3615284,
+  "archivo": "arezzo.png"
+ },
+ "Iraklis": {
+  "nombre": "Iraklis",
+  "intento": 1792338252.3615284,
+  "archivo": "iraklis.png"
+ },
+ "For Sittard": {
+  "nombre": "Fortuna Sittard",
+  "intento": 1792338252.3615284,
+  "archivo": "for_sittard.png"
+ },
+ "Utrecht": {
+  "nombre": "Utrecht",
+  "intento": 1792338252.3615284,
+  "archivo": "utrecht.png"
+ },
+ "Nice": {
+  "nombre": "Niza",
+  "intento": 1792338252.3615284,
+  "archivo": "nice.png"
+ },
+ "Lazio": {
+  "nombre": "Lazio",
+  "intento": 1792338252.3615284,
+  "archivo": "lazio.png"
+ },
+ "Sevilla": {
+  "nombre": "Sevilla",
+  "intento": 1792338252.3615284,
+  "archivo": "sevilla.png"
+ },
+ "Sabadell": {
+  "nombre": "Sabadell",
+  "intento": 1792338252.3615284,
+  "archivo": "sabadell.png"
+ },
+ "Cagliari": {
+  "nombre": "Cagliari",
+  "intento": 1792338252.3615284,
+  "archivo": "cagliari.png"
+ },
+ "Besiktas": {
+  "nombre": "Beşiktaş",
+  "intento": 1792338252.3615284,
+  "archivo": "besiktas.png"
+ },
+ "Tenerife": {
+  "nombre": "Tenerife",
+  "intento": 1792338252.3615284,
+  "archivo": "tenerife.png"
+ },
+ "Montpellier": {
+  "nombre": "Montpellier",
+  "intento": 1792338252.3615284,
+  "archivo": "montpellier.png"
+ },
+ "Torino": {
+  "nombre": "Torino",
+  "intento": 1792338252.3615284,
+  "archivo": "torino.png"
+ },
+ "Coventry": {
+  "nombre": "Coventry City",
+  "intento": 1792338252.3615284,
+  "archivo": "coventry.png"
+ },
+ "Vallecano": {
+  "nombre": "Rayo Vallecano",
+  "intento": 1792338252.3615284
+ },
+ "Gil Vicente": {
+  "nombre": "Gil Vicente",
+  "intento": 1792338252.3615284
+ }
+}

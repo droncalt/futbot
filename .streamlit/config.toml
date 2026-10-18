@@ -1,0 +1,13 @@
+[browser]
+gatherUsageStats = false
+
+[server]
+maxUploadSize = 500
+
+# Tema oscuro suave (no cansa la vista): fondo azul petróleo, texto gris claro, acento naranja.
+[theme]
+base = "dark"
+primaryColor = "#FF8A3D"
+backgroundColor = "#0F1720"
+secondaryBackgroundColor = "#17212C"
+textColor = "#E7EDF3"

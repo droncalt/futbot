@@ -1,0 +1,2156 @@
+{
+ "fecha": "2026-10-18",
+ "fuente": "understat",
+ "fuente_nombre": "Understat",
+ "ligas": [
+  "E0",
+  "SP1",
+  "I1",
+  "D1",
+  "F1"
+ ],
+ "periodo_ajuste": "2025-08-01 a 2025-12-31",
+ "periodo_validacion": "2026-01-01 a 2026-06-30",
+ "periodo_actual": "temporada 2026/27 hasta 2026-10-18",
+ "filas": {
+  "ajuste": 22710,
+  "validacion": 27258,
+  "actual": 9062
+ },
+ "parametros": {
+  "kappa": 12.0,
+  "xi": 0.002,
+  "beta": 1.0,
+  "suplente": true,
+  "poisson": false
+ },
+ "tabla_parametros": [
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.2491005101540534,
+   "logloss_validacion": 0.24871107053729533
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24931094972811466,
+   "logloss_validacion": 0.24888318164308298
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.2498800586069465,
+   "logloss_validacion": 0.24944691445375264
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.2500351122960133,
+   "logloss_validacion": 0.24958140653901473
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.2479178209607291,
+   "logloss_validacion": 0.24769442593396965
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.2480972724815361,
+   "logloss_validacion": 0.24784663240340632
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24867940889354287,
+   "logloss_validacion": 0.24842501287650623
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24880100580618678,
+   "logloss_validacion": 0.2485387745391463
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24727686440363147,
+   "logloss_validacion": 0.2473356364139884
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24744608121924638,
+   "logloss_validacion": 0.2474828886447541
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24801665197450187,
+   "logloss_validacion": 0.24806040837180465
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24812813207588094,
+   "logloss_validacion": 0.24817100075099127
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24836680129664654,
+   "logloss_validacion": 0.24802946279024696
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24853963850981123,
+   "logloss_validacion": 0.24817041978067167
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24911394131828704,
+   "logloss_validacion": 0.2487548804345573
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24922299846806992,
+   "logloss_validacion": 0.2488467125241093
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.2471917438545889,
+   "logloss_validacion": 0.2470129227210256
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.2473274105344718,
+   "logloss_validacion": 0.24712848822054476
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24792521781256213,
+   "logloss_validacion": 0.24773680620498648
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.2479947334289465,
+   "logloss_validacion": 0.24780250858788622
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24655588398597442,
+   "logloss_validacion": 0.24665465518592122
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24667943889039434,
+   "logloss_validacion": 0.24676470368801798
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24727162684626292,
+   "logloss_validacion": 0.2473756326442127
+  },
+  {
+   "kappa": 3.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24732942675097935,
+   "logloss_validacion": 0.24743808741463155
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24731099468651907,
+   "logloss_validacion": 0.24758686855743642
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24742292777120356,
+   "logloss_validacion": 0.24769970251952753
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24813211350689154,
+   "logloss_validacion": 0.24829601462697504
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24820222241504172,
+   "logloss_validacion": 0.2483734522221905
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.2461395925395887,
+   "logloss_validacion": 0.2465727411893696
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24622842069863224,
+   "logloss_validacion": 0.24666933662054558
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24694254469020918,
+   "logloss_validacion": 0.2472778227788113
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24698800523340422,
+   "logloss_validacion": 0.24733859569492345
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24550343061051136,
+   "logloss_validacion": 0.24621304539988134
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.2455847012052886,
+   "logloss_validacion": 0.2463057892594249
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.2462848417141779,
+   "logloss_validacion": 0.24691359277728187
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24632282433053077,
+   "logloss_validacion": 0.24697187871047674
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24678596491756122,
+   "logloss_validacion": 0.24702217000738627
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24687472427040844,
+   "logloss_validacion": 0.24710688907399134
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.2475902279919605,
+   "logloss_validacion": 0.24773866743155928
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24763135742240208,
+   "logloss_validacion": 0.24777957395197733
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24562486366136552,
+   "logloss_validacion": 0.24600978386177996
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24568618109695647,
+   "logloss_validacion": 0.24607389050409154
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24641414051473728,
+   "logloss_validacion": 0.24672581048613842
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24642637703683115,
+   "logloss_validacion": 0.24674578977550324
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24499571221195351,
+   "logloss_validacion": 0.24565090634439166
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24504824122016758,
+   "logloss_validacion": 0.24571054493670816
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24576656424679102,
+   "logloss_validacion": 0.2463653663301275
+  },
+  {
+   "kappa": 6.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24577028488013128,
+   "logloss_validacion": 0.2463825847342667
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.2464121359351468,
+   "logloss_validacion": 0.24697824945840433
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24648065980761477,
+   "logloss_validacion": 0.24705086287010655
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24729177236878971,
+   "logloss_validacion": 0.2476955870228201
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24733164632686386,
+   "logloss_validacion": 0.24773990572674798
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24525117233613988,
+   "logloss_validacion": 0.245965776493554
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24530339412247668,
+   "logloss_validacion": 0.24602581981324964
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24611152700443403,
+   "logloss_validacion": 0.24667988843708966
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24613419471587117,
+   "logloss_validacion": 0.24671145204960274
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24461855914058148,
+   "logloss_validacion": 0.24560270666359132
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.2446655690844595,
+   "logloss_validacion": 0.2456598675235979
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24545676803532246,
+   "logloss_validacion": 0.24631326877189988
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24547429170193016,
+   "logloss_validacion": 0.24634292088752083
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.2463008273475832,
+   "logloss_validacion": 0.2467771552112398
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24636315330527328,
+   "logloss_validacion": 0.24683348366837363
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.2471777731487211,
+   "logloss_validacion": 0.2475248254098595
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24720773388218623,
+   "logloss_validacion": 0.24754759824670877
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24515179083820485,
+   "logloss_validacion": 0.24576772907721545
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24519513549023186,
+   "logloss_validacion": 0.24580841676990292
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24601140213349412,
+   "logloss_validacion": 0.24651552338393146
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.2460215411000017,
+   "logloss_validacion": 0.24652260133858014
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24452717126217605,
+   "logloss_validacion": 0.24540507281036814
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24456453030939262,
+   "logloss_validacion": 0.24544225495040198
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.245366729779681,
+   "logloss_validacion": 0.24615235591999265
+  },
+  {
+   "kappa": 12.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24537106943255094,
+   "logloss_validacion": 0.24615715148801162
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24657047528597975,
+   "logloss_validacion": 0.24722745373097169
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24662149446516488,
+   "logloss_validacion": 0.24727685857026582
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24751152856466133,
+   "logloss_validacion": 0.24798606398166892
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24754439292135286,
+   "logloss_validacion": 0.2480157332355245
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24541777309819438,
+   "logloss_validacion": 0.24621422054768485
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.2454582982893538,
+   "logloss_validacion": 0.2462547215512476
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24633702766475904,
+   "logloss_validacion": 0.24696989444261538
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24635890226260368,
+   "logloss_validacion": 0.24699062022372756
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24478650590933482,
+   "logloss_validacion": 0.24584384321907318
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24482376446414636,
+   "logloss_validacion": 0.24588227163170853
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24568176380944975,
+   "logloss_validacion": 0.24659667387552875
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.0,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24570041642744964,
+   "logloss_validacion": 0.24661596821777085
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24701731049712303,
+   "logloss_validacion": 0.24764130596155567
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24707600525547727,
+   "logloss_validacion": 0.24769029551378077
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.24794834829134296,
+   "logloss_validacion": 0.2484338895699181
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.2479863496624346,
+   "logloss_validacion": 0.2484600582637849
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24587637618818634,
+   "logloss_validacion": 0.2466312334899742
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.2459232031384605,
+   "logloss_validacion": 0.24666954538709884
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.2467866024251759,
+   "logloss_validacion": 0.2474237365464356
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 0.5,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.24681227250341461,
+   "logloss_validacion": 0.2474392969854269
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": false,
+   "logloss_ajuste": 0.24525352912146578,
+   "logloss_validacion": 0.24626067255650178
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": true,
+   "poisson": true,
+   "logloss_ajuste": 0.24529664649194274,
+   "logloss_validacion": 0.24629640363795882
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": false,
+   "logloss_ajuste": 0.2461411244027527,
+   "logloss_validacion": 0.24705332934474636
+  },
+  {
+   "kappa": 25.0,
+   "xi": 0.002,
+   "beta": 1.0,
+   "suplente": false,
+   "poisson": true,
+   "logloss_ajuste": 0.2461631927062987,
+   "logloss_validacion": 0.2470671212255887
+  }
+ ],
+ "comparacion": {
+  "validacion": {
+   "filas": 27258,
+   "logloss_titular_modelo": 0.25664996568921283,
+   "logloss_titular_sin_rival": 0.2582114709168781,
+   "logloss_titular_otra_dispersion": 0.25670091693455155,
+   "logloss_titular_solo_posicion": 0.2662007621832461,
+   "logloss_titular_ingenuo": 0.28689402567439765,
+   "logloss_sin_confirmar_modelo": 0.23416017993152338,
+   "logloss_sin_confirmar_sin_factor_suplente": 0.23490595388753185
+  },
+  "actual": {
+   "filas": 9062,
+   "logloss_titular_modelo": 0.2711332979510919,
+   "logloss_titular_sin_rival": 0.2736471312187349,
+   "logloss_titular_otra_dispersion": 0.2711502380935554,
+   "logloss_titular_solo_posicion": 0.281545771475063,
+   "logloss_titular_ingenuo": 0.3457012569458619,
+   "logloss_sin_confirmar_modelo": 0.2527110454329426,
+   "logloss_sin_confirmar_sin_factor_suplente": 0.2539207897998025
+  }
+ },
+ "recalibracion": {
+  "usar": false,
+  "coeficientes": {
+   "titular|1": [
+    -0.0840054891219225,
+    0.9507002587567694
+   ],
+   "titular|2": [
+    -0.14910340260799898,
+    0.970474638759959
+   ],
+   "titular|3": [
+    0.1636150690871,
+    1.0849747215587948
+   ],
+   "suplente|1": [
+    -0.2597777558977585,
+    0.8171290914169482
+   ],
+   "suplente|2": [
+    -0.7568448886832908,
+    0.8137106226383309
+   ],
+   "suplente|3": [
+    -2.3012486326657813,
+    0.6823716136805715
+   ],
+   "sin_confirmar|1": [
+    -0.08915990876994458,
+    0.9168290725824655
+   ],
+   "sin_confirmar|2": [
+    -0.1808655106285555,
+    0.9517836959946595
+   ],
+   "sin_confirmar|3": [
+    0.24564106111331177,
+    1.1030910120226471
+   ]
+  },
+  "logloss_validacion_cruda": 0.24540507281036808,
+  "logloss_validacion_recalibrada": 0.2454838709200833,
+  "error_calibracion_validacion_cruda": 0.003755675744414179,
+  "error_calibracion_validacion_recalibrada": 0.0038382543602807806
+ },
+ "por_evento": [
+  {
+   "evento": "Tiros al arco 1+ · Titular",
+   "periodo": "ajuste",
+   "n": 15791,
+   "prob_media": 0.27261189561268584,
+   "frecuencia_real": 0.2654043442467228,
+   "logloss": 0.511968892950078,
+   "brier": 0.168630904234218,
+   "error_calibracion": 0.009111095497637202,
+   "mayor_desvio": 0.040357284800811355
+  },
+  {
+   "evento": "Tiros al arco 1+ · Titular",
+   "periodo": "validacion",
+   "n": 18974,
+   "prob_media": 0.2715657246645131,
+   "frecuencia_real": 0.26773479498260777,
+   "logloss": 0.5100592975087268,
+   "brier": 0.16776761250113126,
+   "error_calibracion": 0.01020960534554746,
+   "mayor_desvio": 0.028766472850527025
+  },
+  {
+   "evento": "Tiros al arco 1+ · Titular",
+   "periodo": "actual",
+   "n": 6256,
+   "prob_media": 0.277914237719901,
+   "frecuencia_real": 0.2893222506393862,
+   "logloss": 0.5251446829709048,
+   "brier": 0.17442551008243581,
+   "error_calibracion": 0.012354661486066336,
+   "mayor_desvio": 0.03152004285410914
+  },
+  {
+   "evento": "Tiros al arco 2+ · Titular",
+   "periodo": "ajuste",
+   "n": 15791,
+   "prob_media": 0.06813325354667742,
+   "frecuencia_real": 0.06320055727946298,
+   "logloss": 0.19601705230363772,
+   "brier": 0.05334047872704724,
+   "error_calibracion": 0.005758365866453646,
+   "mayor_desvio": 0.021364189915365622
+  },
+  {
+   "evento": "Tiros al arco 2+ · Titular",
+   "periodo": "validacion",
+   "n": 18974,
+   "prob_media": 0.06695998771115352,
+   "frecuencia_real": 0.06514177295246126,
+   "logloss": 0.1970489268365105,
+   "brier": 0.05450130675299584,
+   "error_calibracion": 0.0021684826317343287,
+   "mayor_desvio": 0.034183655786026
+  },
+  {
+   "evento": "Tiros al arco 2+ · Titular",
+   "periodo": "actual",
+   "n": 6256,
+   "prob_media": 0.06949414681819881,
+   "frecuencia_real": 0.07512787723785166,
+   "logloss": 0.21442739869057878,
+   "brier": 0.06086949056899717,
+   "error_calibracion": 0.006299335983294674,
+   "mayor_desvio": 0.013543201575111241
+  },
+  {
+   "evento": "Tiros al arco 3+ · Titular",
+   "periodo": "ajuste",
+   "n": 15791,
+   "prob_media": 0.01619772110219522,
+   "frecuencia_real": 0.014818567538471281,
+   "logloss": 0.06039752088668406,
+   "brier": 0.013652246178872162,
+   "error_calibracion": 0.0022421009782810884,
+   "mayor_desvio": 0.013646781785797535
+  },
+  {
+   "evento": "Tiros al arco 3+ · Titular",
+   "periodo": "validacion",
+   "n": 18974,
+   "prob_media": 0.01574240237489709,
+   "frecuencia_real": 0.015125961842521345,
+   "logloss": 0.06284167272240118,
+   "brier": 0.014166586023390732,
+   "error_calibracion": 0.0007339988857278436,
+   "mayor_desvio": 0.0160579372729574
+  },
+  {
+   "evento": "Tiros al arco 3+ · Titular",
+   "periodo": "actual",
+   "n": 6256,
+   "prob_media": 0.016477672501072856,
+   "frecuencia_real": 0.019501278772378516,
+   "logloss": 0.07382781219179216,
+   "brier": 0.0176599594916324,
+   "error_calibracion": 0.003023606271305659,
+   "mayor_desvio": 0.0010820232805977843
+  },
+  {
+   "evento": "Tiros al arco 1+ · Entra desde el banco",
+   "periodo": "ajuste",
+   "n": 6919,
+   "prob_media": 0.13111392201693312,
+   "frecuencia_real": 0.13672496025437203,
+   "logloss": 0.37460955864806,
+   "brier": 0.11257238029745492,
+   "error_calibracion": 0.017848882879134453,
+   "mayor_desvio": 0.05279989338619806
+  },
+  {
+   "evento": "Tiros al arco 1+ · Entra desde el banco",
+   "periodo": "validacion",
+   "n": 8284,
+   "prob_media": 0.13158572266583896,
+   "frecuencia_real": 0.14159826170931916,
+   "logloss": 0.3801510928582388,
+   "brier": 0.11453208527501439,
+   "error_calibracion": 0.011730259449078642,
+   "mayor_desvio": 0.01444817682258609
+  },
+  {
+   "evento": "Tiros al arco 1+ · Entra desde el banco",
+   "periodo": "actual",
+   "n": 2806,
+   "prob_media": 0.13470563398861987,
+   "frecuencia_real": 0.1578759800427655,
+   "logloss": 0.41087727292857956,
+   "brier": 0.1264764329402469,
+   "error_calibracion": 0.029015712093340175,
+   "mayor_desvio": 0.043646062428207066
+  },
+  {
+   "evento": "Tiros al arco 2+ · Entra desde el banco",
+   "periodo": "ajuste",
+   "n": 6919,
+   "prob_media": 0.01905790278517396,
+   "frecuencia_real": 0.017054487642722937,
+   "logloss": 0.07923271166373064,
+   "brier": 0.016576043630547894,
+   "error_calibracion": 0.0020034151424510238,
+   "mayor_desvio": 0.0016033779911367278
+  },
+  {
+   "evento": "Tiros al arco 2+ · Entra desde el banco",
+   "periodo": "validacion",
+   "n": 8284,
+   "prob_media": 0.0198764678508965,
+   "frecuencia_real": 0.019072911636890393,
+   "logloss": 0.08767673309189,
+   "brier": 0.018486444968238234,
+   "error_calibracion": 0.002078750138935157,
+   "mayor_desvio": 0.0006474446233214158
+  },
+  {
+   "evento": "Tiros al arco 2+ · Entra desde el banco",
+   "periodo": "actual",
+   "n": 2806,
+   "prob_media": 0.01992469648757574,
+   "frecuencia_real": 0.0270848182466144,
+   "logloss": 0.11797208089879914,
+   "brier": 0.026048088187874987,
+   "error_calibracion": 0.008354655375534236,
+   "mayor_desvio": 0.007878115208036836
+  },
+  {
+   "evento": "Tiros al arco 3+ · Entra desde el banco",
+   "periodo": "ajuste",
+   "n": 6919,
+   "prob_media": 0.002797723602595581,
+   "frecuencia_real": 0.0014452955629426219,
+   "logloss": 0.010584455461936626,
+   "brier": 0.0014524183150225706,
+   "error_calibracion": 0.001352428039652959,
+   "mayor_desvio": 0.001352428039652959
+  },
+  {
+   "evento": "Tiros al arco 3+ · Entra desde el banco",
+   "periodo": "validacion",
+   "n": 8284,
+   "prob_media": 0.0030620402317424263,
+   "frecuencia_real": 0.002655721873491067,
+   "logloss": 0.01678417110515933,
+   "brier": 0.0026515924593264483,
+   "error_calibracion": 0.00040631835825135954,
+   "mayor_desvio": 0.00039043913463941227
+  },
+  {
+   "evento": "Tiros al arco 3+ · Entra desde el banco",
+   "periodo": "actual",
+   "n": 2806,
+   "prob_media": 0.002998332627691546,
+   "frecuencia_real": 0.0042765502494654314,
+   "logloss": 0.024889932606585848,
+   "brier": 0.004252531597659927,
+   "error_calibracion": 0.0012782176217738853,
+   "mayor_desvio": 0.0012782176217738853
+  },
+  {
+   "evento": "Tiros al arco 1+ · Juega (titular o suplente)",
+   "periodo": "ajuste",
+   "n": 22710,
+   "prob_media": 0.2260807947694061,
+   "frecuencia_real": 0.22619991193306913,
+   "logloss": 0.4843946206777405,
+   "brier": 0.15675910532503268,
+   "error_calibracion": 0.009245315682469401,
+   "mayor_desvio": 0.04503524136666809
+  },
+  {
+   "evento": "Tiros al arco 1+ · Juega (titular o suplente)",
+   "periodo": "validacion",
+   "n": 27258,
+   "prob_media": 0.2262550200053736,
+   "frecuencia_real": 0.229400542959865,
+   "logloss": 0.48268613819831563,
+   "brier": 0.1560828814805695,
+   "error_calibracion": 0.006322959922282795,
+   "mayor_desvio": 0.04123098959172433
+  },
+  {
+   "evento": "Tiros al arco 1+ · Juega (titular o suplente)",
+   "periodo": "actual",
+   "n": 9062,
+   "prob_media": 0.22935486663234855,
+   "frecuencia_real": 0.24862061355109247,
+   "logloss": 0.5058464545652278,
+   "brier": 0.16604211104329977,
+   "error_calibracion": 0.019406232738070295,
+   "mayor_desvio": 0.03097491325916929
+  },
+  {
+   "evento": "Tiros al arco 2+ · Juega (titular o suplente)",
+   "periodo": "ajuste",
+   "n": 22710,
+   "prob_media": 0.05216130953381463,
+   "frecuencia_real": 0.049141347424042275,
+   "logloss": 0.16725547334148572,
+   "brier": 0.043120720293111495,
+   "error_calibracion": 0.0035332339784474548,
+   "mayor_desvio": 0.0186848757150615
+  },
+  {
+   "evento": "Tiros al arco 2+ · Juega (titular o suplente)",
+   "periodo": "validacion",
+   "n": 27258,
+   "prob_media": 0.05171106793572954,
+   "frecuencia_real": 0.051140949446034194,
+   "logloss": 0.16955530723541323,
+   "brier": 0.044559163094803275,
+   "error_calibracion": 0.002681686706079654,
+   "mayor_desvio": 0.026948943217094012
+  },
+  {
+   "evento": "Tiros al arco 2+ · Juega (titular o suplente)",
+   "periodo": "actual",
+   "n": 9062,
+   "prob_media": 0.05255261250251991,
+   "frecuencia_real": 0.06025160008828073,
+   "logloss": 0.19066698479918226,
+   "brier": 0.05138601887884197,
+   "error_calibracion": 0.0076989875857608235,
+   "mayor_desvio": 0.0326346054673195
+  },
+  {
+   "evento": "Tiros al arco 3+ · Juega (titular o suplente)",
+   "periodo": "ajuste",
+   "n": 22710,
+   "prob_media": 0.011834435539654992,
+   "frecuencia_real": 0.01074416556583003,
+   "logloss": 0.047129467413430395,
+   "brier": 0.010039218433965838,
+   "error_calibracion": 0.001991007800263858,
+   "mayor_desvio": 0.0015555021173155447
+  },
+  {
+   "evento": "Tiros al arco 3+ · Juega (titular o suplente)",
+   "periodo": "validacion",
+   "n": 27258,
+   "prob_media": 0.01161232307873632,
+   "frecuencia_real": 0.011336121505613032,
+   "logloss": 0.05023909436084129,
+   "brier": 0.01074369991656459,
+   "error_calibracion": 0.00041732097511299176,
+   "mayor_desvio": 0.0010641574493197026
+  },
+  {
+   "evento": "Tiros al arco 3+ · Juega (titular o suplente)",
+   "periodo": "actual",
+   "n": 9062,
+   "prob_media": 0.011804786427507043,
+   "frecuencia_real": 0.014787022732288678,
+   "logloss": 0.06161969693441759,
+   "brier": 0.013771942664225245,
+   "error_calibracion": 0.0029822363047816345,
+   "mayor_desvio": 0.002538326519845164
+  }
+ ],
+ "calibracion_por_evento": {
+  "Tiros al arco 1+ · Titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 2300,
+    "prob_estimada": 0.07819700425409752,
+    "frecuencia_real": 0.0817391304347826
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 6640,
+    "prob_estimada": 0.14778779426432517,
+    "frecuencia_real": 0.15075301204819277
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 3315,
+    "prob_estimada": 0.24193331630701034,
+    "frecuencia_real": 0.2295625942684766
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 1944,
+    "prob_estimada": 0.34943320433544034,
+    "frecuencia_real": 0.3487654320987654
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 2115,
+    "prob_estimada": 0.45115161989033925,
+    "frecuencia_real": 0.42884160756501183
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 1730,
+    "prob_estimada": 0.544918951995111,
+    "frecuencia_real": 0.5196531791907515
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 770,
+    "prob_estimada": 0.6400646959806418,
+    "frecuencia_real": 0.6688311688311688
+   },
+   {
+    "lo": 0.7,
+    "hi": 0.75,
+    "n": 93,
+    "prob_estimada": 0.7212442947972205,
+    "frecuencia_real": 0.8064516129032258
+   },
+   {
+    "lo": 0.75,
+    "hi": 0.8,
+    "n": 42,
+    "prob_estimada": 0.7716534180300576,
+    "frecuencia_real": 0.7857142857142857
+   },
+   {
+    "lo": 0.8,
+    "hi": 0.85,
+    "n": 15,
+    "prob_estimada": 0.8177371263504029,
+    "frecuencia_real": 0.8666666666666667
+   },
+   {
+    "lo": 0.85,
+    "hi": 0.9,
+    "n": 8,
+    "prob_estimada": 0.8628779202699661,
+    "frecuencia_real": 1.0
+   },
+   {
+    "lo": 0.9,
+    "hi": 0.95,
+    "n": 2,
+    "prob_estimada": 0.9086905717849731,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 2+ · Titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 14210,
+    "prob_estimada": 0.026295553859097806,
+    "frecuencia_real": 0.02617874736101337
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 3120,
+    "prob_estimada": 0.14612834965332577,
+    "frecuencia_real": 0.14134615384615384
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 1271,
+    "prob_estimada": 0.24014611781393796,
+    "frecuencia_real": 0.23131392604248624
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 293,
+    "prob_estimada": 0.3345249527143537,
+    "frecuencia_real": 0.3003412969283277
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 59,
+    "prob_estimada": 0.4372427392814119,
+    "frecuencia_real": 0.4406779661016949
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 17,
+    "prob_estimada": 0.5425529900719138,
+    "frecuencia_real": 0.7058823529411765
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 3,
+    "prob_estimada": 0.6519419948259989,
+    "frecuencia_real": 0.6666666666666666
+   },
+   {
+    "lo": 0.7,
+    "hi": 0.75,
+    "n": 1,
+    "prob_estimada": 0.7004602551460266,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 3+ · Titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 18554,
+    "prob_estimada": 0.01292129559503993,
+    "frecuencia_real": 0.012557938988897272
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 378,
+    "prob_estimada": 0.1271690483840685,
+    "frecuencia_real": 0.1111111111111111
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 32,
+    "prob_estimada": 0.23067042045295238,
+    "frecuencia_real": 0.25
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 8,
+    "prob_estimada": 0.3287304975092411,
+    "frecuencia_real": 0.375
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 2,
+    "prob_estimada": 0.43671323359012604,
+    "frecuencia_real": 0.5
+   }
+  ],
+  "Tiros al arco 1+ · Entra desde el banco": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 3818,
+    "prob_estimada": 0.05366218988473867,
+    "frecuencia_real": 0.06731272917757988
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 2626,
+    "prob_estimada": 0.14777573787657614,
+    "frecuencia_real": 0.16222391469916222
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 1396,
+    "prob_estimada": 0.24072469501918914,
+    "frecuencia_real": 0.23997134670487105
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 359,
+    "prob_estimada": 0.3394403990596782,
+    "frecuencia_real": 0.3370473537604457
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 65,
+    "prob_estimada": 0.4330294861243321,
+    "frecuencia_real": 0.4
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 16,
+    "prob_estimada": 0.5334687903523445,
+    "frecuencia_real": 0.375
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 4,
+    "prob_estimada": 0.6304007917642593,
+    "frecuencia_real": 0.5
+   }
+  ],
+  "Tiros al arco 2+ · Entra desde el banco": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 8158,
+    "prob_estimada": 0.01810715209155968,
+    "frecuencia_real": 0.018754596714881097
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 116,
+    "prob_estimada": 0.12527042556682538,
+    "frecuencia_real": 0.034482758620689655
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 9,
+    "prob_estimada": 0.22966018484698403,
+    "frecuencia_real": 0.1111111111111111
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 1,
+    "prob_estimada": 0.34020188450813293,
+    "frecuencia_real": 0.0
+   }
+  ],
+  "Tiros al arco 3+ · Entra desde el banco": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 8283,
+    "prob_estimada": 0.003046481631319359,
+    "frecuencia_real": 0.0026560424966799467
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 1,
+    "prob_estimada": 0.13193392753601074,
+    "frecuencia_real": 0.0
+   }
+  ],
+  "Tiros al arco 1+ · Juega (titular o suplente)": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 5485,
+    "prob_estimada": 0.07297912189446613,
+    "frecuencia_real": 0.08422971741112124
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 9430,
+    "prob_estimada": 0.1457826856369684,
+    "frecuencia_real": 0.15079533404029694
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 5088,
+    "prob_estimada": 0.24622333083161205,
+    "frecuencia_real": 0.2425314465408805
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 3241,
+    "prob_estimada": 0.3473763863214995,
+    "frecuencia_real": 0.34588090095649493
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 2286,
+    "prob_estimada": 0.4464603869777339,
+    "frecuencia_real": 0.43832020997375326
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 1252,
+    "prob_estimada": 0.5435027982385013,
+    "frecuencia_real": 0.5447284345047924
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 394,
+    "prob_estimada": 0.636433985027565,
+    "frecuencia_real": 0.6776649746192893
+   },
+   {
+    "lo": 0.7,
+    "hi": 0.75,
+    "n": 48,
+    "prob_estimada": 0.7215019911527634,
+    "frecuencia_real": 0.7291666666666666
+   },
+   {
+    "lo": 0.75,
+    "hi": 0.8,
+    "n": 22,
+    "prob_estimada": 0.7763749388131228,
+    "frecuencia_real": 0.8636363636363636
+   },
+   {
+    "lo": 0.8,
+    "hi": 0.85,
+    "n": 8,
+    "prob_estimada": 0.8221059814095497,
+    "frecuencia_real": 0.75
+   },
+   {
+    "lo": 0.85,
+    "hi": 0.9,
+    "n": 4,
+    "prob_estimada": 0.8722051531076431,
+    "frecuencia_real": 0.75
+   }
+  ],
+  "Tiros al arco 2+ · Juega (titular o suplente)": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 22586,
+    "prob_estimada": 0.02714050054478897,
+    "frecuencia_real": 0.02784911006818383
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 3506,
+    "prob_estimada": 0.1403651345166321,
+    "frecuencia_real": 0.1351968054763263
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 951,
+    "prob_estimada": 0.2372538853832349,
+    "frecuencia_real": 0.2103049421661409
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 163,
+    "prob_estimada": 0.33336063360144025,
+    "frecuencia_real": 0.4049079754601227
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 39,
+    "prob_estimada": 0.43793593690945554,
+    "frecuencia_real": 0.46153846153846156
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 9,
+    "prob_estimada": 0.534311850865682,
+    "frecuencia_real": 0.5555555555555556
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 4,
+    "prob_estimada": 0.642561599612236,
+    "frecuencia_real": 0.5
+   }
+  ],
+  "Tiros al arco 3+ · Juega (titular o suplente)": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 26985,
+    "prob_estimada": 0.010284676341010265,
+    "frecuencia_real": 0.009968501019084676
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 244,
+    "prob_estimada": 0.12811333777718856,
+    "frecuencia_real": 0.12704918032786885
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 22,
+    "prob_estimada": 0.23787464065985245,
+    "frecuencia_real": 0.3181818181818182
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 5,
+    "prob_estimada": 0.3320746660232544,
+    "frecuencia_real": 0.2
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 2,
+    "prob_estimada": 0.42172078788280487,
+    "frecuencia_real": 0.5
+   }
+  ]
+ },
+ "calibracion_actual": {
+  "Tiros al arco 1+ · Titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 616,
+    "prob_estimada": 0.08003668405430077,
+    "frecuencia_real": 0.08603896103896104
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 2227,
+    "prob_estimada": 0.14737158649081225,
+    "frecuencia_real": 0.14683430624158061
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 1118,
+    "prob_estimada": 0.24455211139642274,
+    "frecuencia_real": 0.2638640429338104
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 639,
+    "prob_estimada": 0.3471967020598189,
+    "frecuencia_real": 0.37871674491392804
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 757,
+    "prob_estimada": 0.4520691504881593,
+    "frecuencia_real": 0.4623513870541612
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 622,
+    "prob_estimada": 0.546967941752584,
+    "frecuencia_real": 0.5755627009646302
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 219,
+    "prob_estimada": 0.6370830846159425,
+    "frecuencia_real": 0.6301369863013698
+   },
+   {
+    "lo": 0.7,
+    "hi": 0.75,
+    "n": 35,
+    "prob_estimada": 0.7221604977335249,
+    "frecuencia_real": 0.8
+   },
+   {
+    "lo": 0.75,
+    "hi": 0.8,
+    "n": 12,
+    "prob_estimada": 0.770283172527949,
+    "frecuencia_real": 0.75
+   },
+   {
+    "lo": 0.8,
+    "hi": 0.85,
+    "n": 7,
+    "prob_estimada": 0.8337786623409816,
+    "frecuencia_real": 0.8571428571428571
+   },
+   {
+    "lo": 0.85,
+    "hi": 0.9,
+    "n": 4,
+    "prob_estimada": 0.8893322944641113,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 2+ · Titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 4585,
+    "prob_estimada": 0.02710155207075223,
+    "frecuencia_real": 0.027699018538713194
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 1107,
+    "prob_estimada": 0.1454450549741209,
+    "frecuencia_real": 0.15898825654923215
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 455,
+    "prob_estimada": 0.23807119953108358,
+    "frecuencia_real": 0.24835164835164836
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 84,
+    "prob_estimada": 0.3417368431886037,
+    "frecuencia_real": 0.4880952380952381
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 14,
+    "prob_estimada": 0.4344295859336853,
+    "frecuencia_real": 0.2857142857142857
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 7,
+    "prob_estimada": 0.539948148386819,
+    "frecuencia_real": 0.7142857142857143
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 4,
+    "prob_estimada": 0.6492871344089508,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 3+ · Titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 6130,
+    "prob_estimada": 0.01376300118922277,
+    "frecuencia_real": 0.014845024469820554
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 110,
+    "prob_estimada": 0.12915901778773828,
+    "frecuencia_real": 0.22727272727272727
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 12,
+    "prob_estimada": 0.2473165181775888,
+    "frecuencia_real": 0.25
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 2,
+    "prob_estimada": 0.36587637662887573,
+    "frecuencia_real": 0.5
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 2,
+    "prob_estimada": 0.4050394743680954,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 1+ · Entra desde el banco": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 1299,
+    "prob_estimada": 0.05782322368525066,
+    "frecuencia_real": 0.07852193995381063
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 865,
+    "prob_estimada": 0.14826145202265997,
+    "frecuencia_real": 0.19190751445086704
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 478,
+    "prob_estimada": 0.2422722619510096,
+    "frecuencia_real": 0.25732217573221755
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 132,
+    "prob_estimada": 0.3348564284317421,
+    "frecuencia_real": 0.2727272727272727
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 27,
+    "prob_estimada": 0.44332231526021604,
+    "frecuencia_real": 0.4444444444444444
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 5,
+    "prob_estimada": 0.5297186255455018,
+    "frecuencia_real": 0.8
+   }
+  ],
+  "Tiros al arco 2+ · Entra desde el banco": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 2763,
+    "prob_estimada": 0.01818051671378727,
+    "frecuencia_real": 0.026058631921824105
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 42,
+    "prob_estimada": 0.12951474140087763,
+    "frecuencia_real": 0.09523809523809523
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 1,
+    "prob_estimada": 0.23631152510643005,
+    "frecuencia_real": 0.0
+   }
+  ],
+  "Tiros al arco 3+ · Entra desde el banco": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 2806,
+    "prob_estimada": 0.002998332627691546,
+    "frecuencia_real": 0.0042765502494654314
+   }
+  ],
+  "Tiros al arco 1+ · Juega (titular o suplente)": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 1608,
+    "prob_estimada": 0.07455597770520815,
+    "frecuencia_real": 0.08333333333333333
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 3203,
+    "prob_estimada": 0.14399422203893406,
+    "frecuencia_real": 0.1620355916328442
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 1786,
+    "prob_estimada": 0.24562083142168178,
+    "frecuencia_real": 0.2765957446808511
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 1116,
+    "prob_estimada": 0.3476043618334237,
+    "frecuencia_real": 0.37544802867383514
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 822,
+    "prob_estimada": 0.4465647521825312,
+    "frecuencia_real": 0.46472019464720193
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 374,
+    "prob_estimada": 0.5409561521548001,
+    "frecuencia_real": 0.5401069518716578
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 121,
+    "prob_estimada": 0.6389995069543192,
+    "frecuencia_real": 0.6363636363636364
+   },
+   {
+    "lo": 0.7,
+    "hi": 0.75,
+    "n": 21,
+    "prob_estimada": 0.7264456862495059,
+    "frecuencia_real": 0.7619047619047619
+   },
+   {
+    "lo": 0.75,
+    "hi": 0.8,
+    "n": 8,
+    "prob_estimada": 0.7791359722614288,
+    "frecuencia_real": 0.875
+   },
+   {
+    "lo": 0.8,
+    "hi": 0.85,
+    "n": 2,
+    "prob_estimada": 0.8283819258213043,
+    "frecuencia_real": 1.0
+   },
+   {
+    "lo": 0.85,
+    "hi": 0.9,
+    "n": 1,
+    "prob_estimada": 0.851044774055481,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 2+ · Juega (titular o suplente)": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 7456,
+    "prob_estimada": 0.027882818921572888,
+    "frecuencia_real": 0.033932403433476394
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 1260,
+    "prob_estimada": 0.1398763657030132,
+    "frecuencia_real": 0.14523809523809525
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 270,
+    "prob_estimada": 0.23773576490305087,
+    "frecuencia_real": 0.27037037037037037
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 57,
+    "prob_estimada": 0.334078300940363,
+    "frecuencia_real": 0.45614035087719296
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 14,
+    "prob_estimada": 0.4347587547131947,
+    "frecuencia_real": 0.5
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 4,
+    "prob_estimada": 0.5430585741996765,
+    "frecuencia_real": 0.75
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 1,
+    "prob_estimada": 0.6032792925834656,
+    "frecuencia_real": 1.0
+   }
+  ],
+  "Tiros al arco 3+ · Juega (titular o suplente)": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 8966,
+    "prob_estimada": 0.010399438369737704,
+    "frecuencia_real": 0.012937764889582868
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 85,
+    "prob_estimada": 0.12768130653044757,
+    "frecuencia_real": 0.1411764705882353
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 8,
+    "prob_estimada": 0.23417801409959793,
+    "frecuencia_real": 0.5
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 3,
+    "prob_estimada": 0.33575833837191266,
+    "frecuencia_real": 0.6666666666666666
+   }
+  ]
+ },
+ "calibrado": {
+  "Tiros al arco 1+ · Titular": {
+   "ece": 0.01020960534554746,
+   "mayor_desvio": 0.028766472850527025,
+   "calibrado": true
+  },
+  "Tiros al arco 2+ · Titular": {
+   "ece": 0.0021684826317343287,
+   "mayor_desvio": 0.034183655786026,
+   "calibrado": true
+  },
+  "Tiros al arco 3+ · Titular": {
+   "ece": 0.0007339988857278436,
+   "mayor_desvio": 0.0160579372729574,
+   "calibrado": true
+  },
+  "Tiros al arco 1+ · Juega (titular o suplente)": {
+   "ece": 0.006322959922282795,
+   "mayor_desvio": 0.04123098959172433,
+   "calibrado": true
+  },
+  "Tiros al arco 2+ · Juega (titular o suplente)": {
+   "ece": 0.002681686706079654,
+   "mayor_desvio": 0.026948943217094012,
+   "calibrado": true
+  },
+  "Tiros al arco 3+ · Juega (titular o suplente)": {
+   "ece": 0.00041732097511299176,
+   "mayor_desvio": 0.0010641574493197026,
+   "calibrado": true
+  }
+ },
+ "criterio": {
+  "ece_max": 0.02,
+  "desvio_max": 0.05,
+  "n_min_bin": 200
+ },
+ "contraste_definicion": {
+  "equipos_partido": 7594,
+  "media_fuente": 4.270345009217803,
+  "media_football_data": 4.376086383987358,
+  "razon": 0.9758365430909967,
+  "coinciden_%": 88.24071635501713,
+  "difieren_en_1_%": 10.534632604687912
+ }
+}
