@@ -1,21 +1,36 @@
 // Partidos, reglas de Betano y ajustes.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'comunes.dart';
+import 'boleta.dart' show BuscadorEquipos;
 import 'datos.dart';
+import 'vivo.dart';
 
-class PantallaPartidos extends StatelessWidget {
+class PantallaPartidos extends StatefulWidget {
   const PantallaPartidos({super.key});
+  @override
+  State<PantallaPartidos> createState() => _PantallaPartidosState();
+}
+
+class _PantallaPartidosState extends State<PantallaPartidos> {
+  String busqueda = '';
 
   @override
   Widget build(BuildContext context) {
     final ahora = DateTime.now();
+    final q = normal(busqueda);
     final ps = repo.partidos.where((p) => DateTime.tryParse(p['inicio'].toString().replaceAll(' ', 'T'))?.isAfter(
-        ahora.subtract(const Duration(hours: 2))) ?? true).toList();
+        ahora.subtract(const Duration(hours: 2))) ?? true)
+        .where((p) => q.isEmpty || normal('${p['local']?['nombre']} ${p['visitante']?['nombre']} ${p['liga_nombre']}').contains(q))
+        .toList();
     String? diaPrevio;
     final hijos = <Widget>[
       Text('Partidos', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
       const Text('Probabilidades del bot (modelo + mercado). Hora de Perú.', style: TextStyle(color: Col.suave, fontSize: 12)),
+      const SizedBox(height: 8),
+      BuscadorEquipos(valor: busqueda, alCambiar: (v) => setState(() => busqueda = v)),
     ];
     for (final p in ps) {
       final ini = DateTime.parse(p['inicio'].toString().replaceAll(' ', 'T'));
@@ -27,7 +42,10 @@ class PantallaPartidos extends StatelessWidget {
       }
       hijos.add(_tarjeta(p, ini));
     }
-    if (ps.isEmpty) hijos.add(const Padding(padding: EdgeInsets.all(16), child: Text('No hay partidos próximos en el paquete.')));
+    if (ps.isEmpty) {
+      hijos.add(Padding(padding: const EdgeInsets.all(16), child: Text(busqueda.isEmpty
+          ? 'No hay partidos próximos en el paquete.' : 'Ningún partido próximo de «$busqueda» en las ligas del bot.')));
+    }
     return ListView(padding: const EdgeInsets.all(12), children: hijos);
   }
 
@@ -64,9 +82,60 @@ class PantallaPartidos extends StatelessWidget {
               Text('goles esp. ${f2((p['goles_esperados'] as num).toDouble())}', style: const TextStyle(color: Col.suave, fontSize: 12)),
             InkWell(onTap: () => abrir(p['betano']),
                 child: const Text('Ver en Betano ↗', style: TextStyle(color: Col.naranja, fontWeight: FontWeight.w800))),
+            InkWell(onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => VivoPartido(
+                    liga: '${p['liga']}', local: local.nombre, visitante: visit.nombre, inicio: ini))),
+                child: const Text('📡 En vivo / estadísticas', style: TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w800))),
           ]),
         ]),
       ),
+    );
+  }
+}
+
+/// Estadísticas en vivo de cualquier partido (sin necesidad de guardarlo en una boleta).
+class VivoPartido extends StatefulWidget {
+  final String liga, local, visitante;
+  final DateTime inicio;
+  const VivoPartido({super.key, required this.liga, required this.local, required this.visitante, required this.inicio});
+  @override
+  State<VivoPartido> createState() => _VivoPartidoState();
+}
+
+class _VivoPartidoState extends State<VivoPartido> {
+  Estado? e;
+  String? error;
+  Timer? reloj;
+
+  @override
+  void initState() {
+    super.initState();
+    _leer();
+    reloj = Timer.periodic(const Duration(seconds: 60), (_) => _leer());
+  }
+
+  @override
+  void dispose() {
+    reloj?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _leer() async {
+    final id = await Espn.buscar(widget.liga, widget.local, widget.visitante, widget.inicio);
+    final x = id == null ? null : await Espn.estado(id);
+    if (!mounted) return;
+    setState(() {
+      e = x;
+      error = id == null ? 'Aún no encuentro este partido en ESPN. Se reintenta cada minuto.' : null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (e != null) return DetallePartido(e: e!, linea: const {'patas': []});
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Col.panel, title: Text('${widget.local} vs ${widget.visitante}')),
+      body: Center(child: error == null ? const CircularProgressIndicator()
+          : Padding(padding: const EdgeInsets.all(24), child: Text(error!, textAlign: TextAlign.center))),
     );
   }
 }
@@ -128,7 +197,14 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
     final cal = Map<String, dynamic>.from(repo.paquete['calidad'] ?? {});
     final fg = cal['fijas_global'] as Map?;
     return ListView(padding: const EdgeInsets.all(12), children: [
-      Text('Ajustes', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+      Text('Más', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+      const SizedBox(height: 8),
+      Card(color: Col.tarjeta, child: ListTile(
+        leading: const Icon(Icons.menu_book), title: const Text('Reglas de Betano'),
+        subtitle: const Text('Multi Bono, Seguro, Pago Anticipado, apuesta mínima…'), trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(
+            appBar: AppBar(backgroundColor: Col.panel, title: const Text('Reglas de Betano')), body: const PantallaReglas()))),
+      )),
       const SizedBox(height: 8),
       const Text('Dirección de datos (tu GitHub Pages)', style: TextStyle(fontWeight: FontWeight.w800)),
       const SizedBox(height: 4),

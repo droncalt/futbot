@@ -63,6 +63,7 @@ class Pata:
     mercado: str
     p: float                       # probabilidad calibrada de la pata sola
     familia: str
+    alternativas: dict | None = None  # jugadores: {"1+": p, "2+": p, ...} para elegir la línea que Betano ofrece
 
 
 @dataclass
@@ -184,6 +185,31 @@ class _Partido:
         return self._cache[clave]
 
 
+def _normal(nombre: str) -> str:
+    import unicodedata
+    t = unicodedata.normalize("NFKD", nombre or "").encode("ascii", "ignore").decode().lower()
+    return " ".join(w for w in t.replace("-", " ").split() if w not in ("lottin", "junior", "jr"))
+
+
+def lineas_betano() -> dict:
+    try:
+        import json
+        return json.loads(C.RUTA_LINEAS_BETANO.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def linea_min_jugador(nombre: str, probs: dict) -> int:
+    """Línea más baja de tiros al arco que Betano ofrece para el jugador: lo visto en capturas o, si no hay,
+    2+ cuando 1+ es tan probable que Betano suele ocultarla (C.JUG_ARCO_1_OCULTA)."""
+    vistos = lineas_betano().get("jug_arco", {})
+    n = _normal(nombre)
+    for k, v in vistos.items():
+        if k == n or (k.split()[-1] == n.split()[-1] and k.split()[0][:1] == n.split()[0][:1]):
+            return int(v.get("min", 1))
+    return 2 if (probs.get("1+") or 0) > C.JUG_ARCO_1_OCULTA else 1
+
+
 def _patas_partido(pt: _Partido, p_min: float, jugadores: bool, corners: bool, tarjetas: bool) -> list[Pata]:
     lista = PATAS_GOLES + (PATAS_CORNERS if corners else []) + (PATAS_TARJETAS if tarjetas else [])
     out = []
@@ -204,11 +230,13 @@ def _patas_partido(pt: _Partido, p_min: float, jugadores: bool, corners: bool, t
             if r.get("disponible"):
                 for lado in ("local", "visitante"):
                     for f in r[lado]:
-                        p1 = f["prob"].get("1+")
-                        if p1 and p_min <= p1 <= 0.985:
-                            s = M.Seleccion("jug_arco", "1+", 0.5, **f["seleccion"])
+                        k = linea_min_jugador(f["jugador"], f["prob"])
+                        pk = f["prob"].get(f"{k}+")
+                        if pk and p_min <= pk <= 0.985:
+                            s = M.Seleccion("jug_arco", f"{k}+", k - 0.5, **f["seleccion"])
                             tit, sub = s.etiqueta(pt.local, pt.visitante)
-                            out.append(Pata(f"jug_{f['jugador_id']}", s, tit, sub, float(p1), "jugadores"))
+                            out.append(Pata(f"jug_{f['jugador_id']}", s, tit, sub, float(pk), "jugadores",
+                                            dict(f["prob"])))
         except Exception:
             pass
     return sorted(out, key=lambda x: -x.p)

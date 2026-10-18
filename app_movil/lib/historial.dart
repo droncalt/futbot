@@ -1,11 +1,15 @@
 // Historial guardado en el celular: se liquida solo con los resultados que trae el paquete diario.
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'comunes.dart';
 import 'datos.dart';
+import 'vivo.dart';
 
 class Historial {
   static const _k = 'boletas';
@@ -16,8 +20,84 @@ class Historial {
     return (jsonDecode(t) as List).map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
-  static Future<void> _guardarTodo(List<Map<String, dynamic>> b) async =>
-      (await SharedPreferences.getInstance()).setString(_k, jsonEncode(b));
+  static Future<void> _guardarTodo(List<Map<String, dynamic>> b) async {
+    await (await SharedPreferences.getInstance()).setString(_k, jsonEncode(b));
+    await exportarAprendizaje();
+  }
+
+  /// Copia para la PC: actualizar_celular.bat la trae por USB y el bot aprende de tus patas y capturas.
+  static Future<void> exportarAprendizaje() async {
+    try {
+      final pref = await SharedPreferences.getInstance();
+      final dir = await getExternalStorageDirectory();
+      if (dir == null) return;
+      final datos = {
+        'exportado': DateTime.now().toIso8601String(),
+        'boletas': jsonDecode(pref.getString(_k) ?? '[]'),
+        'lineas_betano': jsonDecode(pref.getString('lineas_betano') ?? '{}'),
+      };
+      await File('${dir.path}/futbot_aprendizaje.json').writeAsString(jsonEncode(datos));
+    } catch (_) {}
+  }
+
+  /// Liquida con los datos de ESPN (incluye córners, tarjetas y tiros de jugadores) y anota cada pata.
+  static Future<int> liquidarEnVivo(Map<String, Estado?> estados) async {
+    final b = await cargar();
+    var cambios = 0, anotadas = 0;
+    for (final bol in b.where((x) => x['estado'] == 'pendiente')) {
+      var perdio = false, todas = true;
+      for (final l in (bol['lineas'] as List)) {
+        final e = estados['${l['local']}|${l['visitante']}|${l['inicio']}'];
+        for (final p in (l['patas'] as List)) {
+          if (e == null) {
+            todas = false;
+            continue;
+          }
+          final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), pPrevia(Map<String, dynamic>.from(p)), e);
+          if (a.estado == 'ganada' || a.estado == 'perdida') {
+            if (p['resultado'] != a.estado) {
+              p['resultado'] = a.estado;
+              p['fuente_resultado'] = 'espn';
+              anotadas++;
+            }
+            if (a.estado == 'perdida') perdio = true;
+          } else {
+            todas = false;
+          }
+        }
+      }
+      if (perdio) {
+        bol['estado'] = 'perdida';
+        bol['retorno'] = 0.0;
+        cambios++;
+      } else if (todas) {
+        bol['estado'] = 'ganada';
+        bol['retorno'] = (bol['monto'] as num) * (bol['cuota'] as num);
+        cambios++;
+      }
+    }
+    if (cambios > 0 || anotadas > 0) await _guardarTodo(b);
+    return cambios;
+  }
+
+  /// Acierto real por tipo de mercado vs lo que prometía el bot (patas ya resueltas).
+  static Map<String, List<double>> porMercado(List<Map<String, dynamic>> b) {
+    final out = <String, List<double>>{}; // mercado → [aciertos, total, suma prob]
+    for (final bol in b) {
+      for (final l in (bol['lineas'] as List)) {
+        for (final p in (l['patas'] as List)) {
+          final r = p['resultado'];
+          if (r != 'ganada' && r != 'perdida') continue;
+          final m = '${p['sel']?['mercado'] ?? p['mercado']}';
+          final v = out.putIfAbsent(m, () => [0, 0, 0]);
+          v[0] += r == 'ganada' ? 1 : 0;
+          v[1] += 1;
+          v[2] += pPrevia(Map<String, dynamic>.from(p));
+        }
+      }
+    }
+    return out;
+  }
 
   static Future<void> guardar(Map<String, dynamic> boleta) async {
     final b = await cargar();
@@ -101,7 +181,9 @@ class Historial {
             DateTime.parse(x['fecha']).difference(DateTime(ini.year, ini.month, ini.day)).inDays.abs() <= 2).firstOrNull;
         if (r == null) { todas = false; continue; }
         for (final p in (l['patas'] as List)) {
-          final ok = cumple(Map<String, dynamic>.from(p['sel']), r);
+          final ok = p['resultado'] == 'ganada' ? true : p['resultado'] == 'perdida' ? false
+              : cumple(Map<String, dynamic>.from(p['sel']), r);
+          if (ok != null && p['resultado'] == null) p['resultado'] = ok ? 'ganada' : 'perdida';
           if (ok == false) perdio = true;
           if (ok == null) todas = false;
         }
@@ -164,12 +246,34 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
           _dato('Lo que esperaba el bot', todas.isEmpty ? '—' : pct(esperado)),
         ]),
         const SizedBox(height: 10),
+        ..._porMercado(),
         if (boletas.isEmpty)
           const Text('Aún no guardaste boletas. En la Súper boleta pulsa «La aposté» o 👁️ (seguimiento).',
               style: TextStyle(color: Col.suave)),
         for (final b in boletas) _tarjeta(b),
       ]),
     );
+  }
+
+  List<Widget> _porMercado() {
+    final m = Historial.porMercado(boletas);
+    if (m.isEmpty) return [];
+    final filas = m.entries.toList()..sort((a, b) => b.value[1].compareTo(a.value[1]));
+    return [
+      const Text('Aprendizaje por mercado (tus patas resueltas)', style: TextStyle(fontWeight: FontWeight.w800)),
+      const Text('Real = cuántas acertaron · Bot = lo que prometía. Si «Real» queda muy por debajo con muchas patas, '
+          'ese mercado está sobrevalorado.', style: TextStyle(color: Col.suave, fontSize: 12)),
+      for (final e in filas)
+        ListTile(
+          dense: true,
+          title: Text(e.key),
+          subtitle: Text('${e.value[0].toInt()}/${e.value[1].toInt()} acertadas'),
+          trailing: Text('Real ${pct(e.value[0] / e.value[1])} · Bot ${pct(e.value[2] / e.value[1])}',
+              style: TextStyle(fontWeight: FontWeight.w800,
+                  color: e.value[0] / e.value[1] + 0.05 < e.value[2] / e.value[1] ? Col.rosa : const Color(0xFF34D399))),
+        ),
+      const SizedBox(height: 8),
+    ];
   }
 
   Widget _dato(String t, String v, {Color? color}) => Container(
@@ -195,7 +299,8 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
         children: [
           for (final l in (b['lineas'] as List))
             ListTile(dense: true, title: Text('${l['local']} vs ${l['visitante']}'),
-                subtitle: Text((l['patas'] as List).map((p) => '${p['titulo']} (${p['mercado']})').join(' + ')),
+                subtitle: Text((l['patas'] as List).map((p) => '${p['resultado'] == 'ganada' ? '✅ ' : p['resultado'] == 'perdida' ? '❌ ' : ''}'
+                    '${p['titulo']} (${p['mercado']})').join(' + ')),
                 trailing: Text(f2((l['cuota'] as num).toDouble()))),
           OverflowBar(alignment: MainAxisAlignment.end, children: [
             TextButton(onPressed: () async { await Historial.marcar(b['id'], 'ganada', ((b['monto'] as num) * (b['cuota'] as num)).toDouble()); _cargar(); },

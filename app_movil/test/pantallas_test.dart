@@ -17,10 +17,11 @@ void main() {
     expect(jsonDecode(texto), isA<Map>());
     await t.pumpWidget(const FutBotApp());
     await t.pump(const Duration(seconds: 1));
-    for (final nombre in ['Partidos', 'Historial', 'Reglas', 'Ajustes', 'Boleta']) {
+    for (final nombre in ['Partidos', 'Historial', 'Más', 'Capturas', 'Boleta']) {
       await t.tap(find.text(nombre).last);
       await t.pump(const Duration(milliseconds: 500));
       expect(t.takeException(), isNull, reason: nombre);
     }
+    await t.pumpWidget(const SizedBox()); // cierra pantallas con temporizador
   });
 }

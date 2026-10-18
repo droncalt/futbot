@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'captura.dart';
 import 'comunes.dart';
 import 'datos.dart';
 import 'historial.dart';
+import 'vivo.dart' show normal;
 
 class EstadoLinea {
   bool on;
@@ -26,7 +28,7 @@ class PantallaBoleta extends StatefulWidget {
 }
 
 class _PantallaBoletaState extends State<PantallaBoleta> {
-  String nivel = 'segura', dia = 'todos';
+  String nivel = 'segura', dia = 'todos', busqueda = '';
   int nLineas = 0; // 0 = automático
   bool usarObjetivo = false;
   double objetivo = 3;
@@ -36,10 +38,15 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
   final estados = <String, EstadoLinea>{};
   final cuotaCtrls = <String, TextEditingController>{};
 
+  Map<String, dynamic> catLineas = {}; // líneas que Betano ofrece, aprendidas de tus capturas
+
   @override
   void initState() {
     super.initState();
     _armar();
+    LineasBetano.cargar().then((c) {
+      if (mounted) setState(() => catLineas = c);
+    });
   }
 
   void _armar() {
@@ -50,6 +57,7 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
     if (dia == 'manana') {
       ls = ls.where((l) => !l.inicio.isBefore(hoy.add(const Duration(days: 1))) && l.inicio.isBefore(hoy.add(const Duration(days: 2)))).toList();
     }
+    if (busqueda.trim().isNotEmpty) ls = ls.where((l) => coincide(busqueda, l)).toList();
     ls.sort((a, b) => b.p.compareTo(a.p));
     final marcadas = <int>[];
     var c = 1.0;
@@ -157,7 +165,9 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
         child: ListView(padding: const EdgeInsets.fromLTRB(12, 8, 12, 16), children: [
           Text('Súper boleta segura', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
           Text('Datos: ${repo.paquete['generado_peru'] ?? '—'} (${repo.origen})', style: const TextStyle(color: Col.suave, fontSize: 12)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          BuscadorEquipos(valor: busqueda, alCambiar: (v) => setState(() { busqueda = v; _armar(); })),
+          const SizedBox(height: 8),
           SegmentedButton<String>(
             segments: [
               for (final k in ['ultra', 'segura', 'equilibrada'])
@@ -189,8 +199,11 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
           ]),
           const SizedBox(height: 6),
           if (lineas.isEmpty)
-            const Card(child: Padding(padding: EdgeInsets.all(16),
-                child: Text('No hay partidos que cumplan el nivel para ese día. Prueba otro día o baja el nivel.')))
+            Card(child: Padding(padding: const EdgeInsets.all(16),
+                child: Text(busqueda.isNotEmpty
+                    ? 'Ese equipo no tiene línea en este nivel/día. Prueba «Próximos días» o el nivel Equilibrada, '
+                      'o míralo en Partidos.'
+                    : 'No hay partidos que cumplan el nivel para ese día. Prueba otro día o baja el nivel.')))
           else
             _ticket(r),
           const SizedBox(height: 8),
@@ -286,6 +299,17 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
                 InkWell(onTap: () => abrir(l.betano),
                     child: const Text('Ver en Betano ↗', style: TextStyle(color: Col.naranjaOsc, fontWeight: FontWeight.w800, fontSize: 12.5))),
               ]),
+              for (final pa in l.patas.where((x) => x.sel['mercado'] == 'jug_arco'))
+                Builder(builder: (_) {
+                  final min = LineasBetano.minimo(catLineas, '${pa.sel['jugador_nombre'] ?? ''}');
+                  final k = int.tryParse('${pa.sel['opcion']}'.replaceAll('+', '')) ?? 1;
+                  if (min == null || min <= k) return const SizedBox.shrink();
+                  final alt = pa.alternativas['$min+'];
+                  return Padding(padding: const EdgeInsets.only(top: 3), child: Text(
+                      '📚 Según tus capturas, Betano ofrece a ${pa.sel['jugador_nombre']} desde $min+'
+                      '${alt != null ? ' (prob. ${pct(alt)})' : ''}. Cambia esta pata en Betano o quítala.',
+                      style: const TextStyle(color: Col.naranjaOsc, fontSize: 11.5, fontWeight: FontWeight.w700)));
+                }),
               for (final a in l.avisos.take(2))
                 Padding(padding: const EdgeInsets.only(top: 3),
                     child: Text('⚠️ $a', style: const TextStyle(color: Color(0xFF8A6D1D), fontSize: 11))),
@@ -367,4 +391,45 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
       ),
     );
   }
+}
+
+/// ¿La línea es del equipo/liga que se busca? (sin tildes ni mayúsculas; "madrid" encuentra Real y Atlético)
+bool coincide(String q, Linea l) {
+  final n = normal(q);
+  if (n.isEmpty) return true;
+  return normal('${l.local.nombre} ${l.visitante.nombre} ${l.ligaNombre}').contains(n);
+}
+
+class BuscadorEquipos extends StatefulWidget {
+  final String valor;
+  final ValueChanged<String> alCambiar;
+  const BuscadorEquipos({super.key, required this.valor, required this.alCambiar});
+  @override
+  State<BuscadorEquipos> createState() => _BuscadorEquiposState();
+}
+
+class _BuscadorEquiposState extends State<BuscadorEquipos> {
+  late final ctrl = TextEditingController(text: widget.valor);
+  @override
+  Widget build(BuildContext context) => TextField(
+        controller: ctrl,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Buscar equipo o liga (ej. Barcelona, Premier)',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: ctrl.text.isEmpty ? null : IconButton(icon: const Icon(Icons.close), onPressed: () {
+            ctrl.clear();
+            widget.alCambiar('');
+            setState(() {});
+          }),
+          isDense: true,
+          filled: true,
+          fillColor: Col.tarjeta,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        ),
+        onChanged: (v) {
+          widget.alCambiar(v);
+          setState(() {});
+        },
+      );
 }

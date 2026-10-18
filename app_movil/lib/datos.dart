@@ -16,9 +16,11 @@ class Pata {
   final String titulo, mercado;
   final double p;
   final Map<String, dynamic> sel;
-  Pata(this.titulo, this.mercado, this.p, this.sel);
-  factory Pata.de(Map<String, dynamic> j) =>
-      Pata(j['titulo'] ?? '', j['mercado'] ?? '', (j['p'] as num).toDouble(), Map<String, dynamic>.from(j['sel'] ?? {}));
+  final Map<String, double> alternativas; // jugadores: {"1+": p, "2+": p, ...}
+  Pata(this.titulo, this.mercado, this.p, this.sel, [this.alternativas = const {}]);
+  factory Pata.de(Map<String, dynamic> j) => Pata(j['titulo'] ?? '', j['mercado'] ?? '', (j['p'] as num).toDouble(),
+      Map<String, dynamic>.from(j['sel'] ?? {}),
+      Map<String, dynamic>.from(j['alternativas'] ?? {}).map((k, v) => MapEntry(k, (v as num).toDouble())));
 }
 
 class Sub {

@@ -93,6 +93,12 @@ UNDERSTAT_PAUSA = 0.5            # ~1,3 consultas por segundo con conexión reut
 # Fuente de datos de jugadores: "auto" usa API-Football si la clave y el plan cubren las temporadas
 # y si no Understat (gratis, sin clave, 5 grandes ligas). También "apifootball" o "understat".
 FUENTE_JUGADORES = "auto"
+# Betano no publica líneas de jugador que pagarían casi nada: el 18/10/2026 el usuario vio a Mbappé con
+# "tiros al arco" solo desde 2+. Si la prob. de 1+ supera este valor y no hay captura que diga lo contrario,
+# se propone 2+. No cambia ninguna probabilidad (es disponibilidad de mercado); lo aprendido de capturas manda.
+JUG_ARCO_1_OCULTA = 0.80
+RUTA_LINEAS_BETANO = RAIZ / "conocimiento" / "betano_lineas.json"  # líneas vistas en capturas del usuario
+
 LIGAS_JUGADORES = {  # código football-data -> id en cada fuente
     "E0": {"apifootball": 39, "understat": "EPL"},
     "SP1": {"apifootball": 140, "understat": "La_liga"},

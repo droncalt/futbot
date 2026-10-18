@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'boleta.dart';
+import 'captura.dart';
 import 'comunes.dart';
 import 'datos.dart';
 import 'historial.dart';
 import 'otras.dart';
+import 'vivo.dart';
 
 String? errorInicio;
 
@@ -78,9 +80,10 @@ class _InicioState extends State<Inicio> {
   Widget build(BuildContext context) {
     final paginas = [
       PantallaBoleta(key: ValueKey('b$version')),
+      PantallaVivo(key: ValueKey('v$version')),
+      const PantallaCapturas(),
       PantallaPartidos(key: ValueKey('p$version')),
       PantallaHistorial(key: ValueKey('h$version')),
-      const PantallaReglas(),
       PantallaAjustes(alActualizar: () => setState(() => version++)),
     ];
     return Scaffold(
@@ -96,15 +99,17 @@ class _InicioState extends State<Inicio> {
       ),
       body: SafeArea(child: paginas[pagina]),
       bottomNavigationBar: NavigationBar(
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         selectedIndex: pagina,
         backgroundColor: Col.panel,
         onDestinationSelected: (i) => setState(() => pagina = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.receipt_long), label: 'Boleta'),
+          NavigationDestination(icon: Icon(Icons.live_tv), label: 'En vivo'),
+          NavigationDestination(icon: Icon(Icons.document_scanner), label: 'Capturas'),
           NavigationDestination(icon: Icon(Icons.sports_soccer), label: 'Partidos'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Historial'),
-          NavigationDestination(icon: Icon(Icons.menu_book), label: 'Reglas'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Ajustes'),
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Más'),
         ],
       ),
     );

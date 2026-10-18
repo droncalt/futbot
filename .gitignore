@@ -10,11 +10,11 @@ datos/ia_config.json
 datos/videos/
 videos_tipsters/
 informes/
+datos/celular/
 
 # --- Pesado o regenerable (la nube lo vuelve a descargar/calcular) ---
 datos/raw/
 datos/modelos/
-datos/jugadores/
 datos/registro_descargas.csv
 datos/evaluacion/predicciones_*.csv
 datos/evaluacion/resumen_2*.json

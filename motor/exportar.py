@@ -43,6 +43,7 @@ def _lineas(nivel: str, escudos: set, jugadores: bool) -> list[dict]:
             "id": l.id, "liga": l.liga, "liga_nombre": C.LIGAS.get(l.liga, l.liga), "inicio": l.inicio.isoformat(),
             "local": _equipo(l.local, escudos), "visitante": _equipo(l.visitante, escudos),
             "patas": [{"titulo": p.titulo, "mercado": p.mercado, "p": round(p.p, 4), "sel": p.seleccion.to_dict()}
+                      | ({"alternativas": {k: round(v, 4) for k, v in p.alternativas.items()}} if p.alternativas else {})
                       for p in l.patas],
             "sub": {str(k): v for k, v in l.subconjuntos.items()},
             "cuota": round(l.cuota, 2), "estimada": l.cuota_tipo == "estimada", "p": round(l.p, 4),

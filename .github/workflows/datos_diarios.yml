@@ -37,7 +37,6 @@ jobs:
         with:
           path: |
             datos/raw
-            datos/jugadores
             datos/escudos
           key: datos-${{ github.run_id }}
           restore-keys: datos-
@@ -46,10 +45,10 @@ jobs:
         run: pip install numpy scipy pandas requests truststore
 
       - name: Descargar datos y ajustar modelos
-        run: python bot.py actualizar --sin-jugadores
+        run: python bot.py actualizar
 
       - name: Armar el paquete para la app
-        run: python bot.py exportar --sin-jugadores
+        run: python bot.py exportar
 
       - uses: actions/upload-pages-artifact@v3
         with:

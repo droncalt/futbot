@@ -35,6 +35,11 @@ def _imprimir(obj) -> None:
     print(json.dumps(obj, ensure_ascii=False, indent=1, default=str))
 
 
+def cmd_celular(a):
+    from motor import celular
+    _imprimir(celular.importar())
+
+
 def cmd_actualizar(a):
     res = datos.actualizar(forzar=a.forzar, progreso=lambda p, m: print(f"{p:4.0%} {m}", file=sys.stderr))
     print(res["estado"].value_counts().to_string())
@@ -192,6 +197,7 @@ def main():
     s = sub.add_parser("backtest"); s.add_argument("--ligas", nargs="*"); s.set_defaults(f=cmd_backtest)
     s = sub.add_parser("equipos"); s.add_argument("--liga", required=True); s.set_defaults(f=cmd_equipos)
     s = sub.add_parser("proximos"); s.add_argument("--liga"); s.set_defaults(f=cmd_proximos)
+    s = sub.add_parser("celular", help="Importa lo aprendido en el celular (capturas y patas)"); s.set_defaults(f=cmd_celular)
     s = sub.add_parser("exportar"); s.add_argument("--sin-jugadores", action="store_true"); s.set_defaults(f=cmd_exportar)
     s = sub.add_parser("analizar")
     s.add_argument("--liga", required=True, help="Código de liga (E0, SP1…) u OTRA")
