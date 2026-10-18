@@ -46,10 +46,10 @@ jobs:
         run: pip install numpy scipy pandas requests truststore
 
       - name: Descargar datos y ajustar modelos
-        run: python bot.py actualizar
+        run: python bot.py actualizar --sin-jugadores
 
       - name: Armar el paquete para la app
-        run: python bot.py exportar
+        run: python bot.py exportar --sin-jugadores
 
       - uses: actions/upload-pages-artifact@v3
         with:

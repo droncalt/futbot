@@ -40,11 +40,12 @@ def cmd_actualizar(a):
     print(res["estado"].value_counts().to_string())
     df = datos.cargar_partidos()
     print(modelo.ajustar_todas(df).to_string())
-    try:  # datos de jugadores (incremental: solo los partidos nuevos)
-        from motor import jugadores as J
-        print(J.actualizar(progreso=lambda m: print(m, file=sys.stderr, flush=True)).to_string(index=False))
-    except Exception as e:  # sin internet, cambios en la fuente, etc.: no frena el resto
-        print("Datos de jugadores: no se pudieron actualizar:", type(e).__name__, e)
+    if not a.sin_jugadores:  # la nube lo omite: el historial de Understat tarda >40 min la 1.ª vez
+        try:  # datos de jugadores (incremental: solo los partidos nuevos)
+            from motor import jugadores as J
+            print(J.actualizar(progreso=lambda m: print(m, file=sys.stderr, flush=True)).to_string(index=False))
+        except Exception as e:  # sin internet, cambios en la fuente, etc.: no frena el resto
+            print("Datos de jugadores: no se pudieron actualizar:", type(e).__name__, e)
     print("Líneas liquidadas:", registro.liquidar_automatico(df))
     q = datos.calidad_datos(df)
     print("Calidad:", {k: v for k, v in q.items() if k != "problemas"}, "| problemas:", len(q["problemas"]))
@@ -186,7 +187,8 @@ def cmd_exportar(a):
 def main():
     p = argparse.ArgumentParser(description="Bot analítico de fútbol")
     sub = p.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("actualizar"); s.add_argument("--forzar", action="store_true"); s.set_defaults(f=cmd_actualizar)
+    s = sub.add_parser("actualizar"); s.add_argument("--forzar", action="store_true")
+    s.add_argument("--sin-jugadores", action="store_true"); s.set_defaults(f=cmd_actualizar)
     s = sub.add_parser("backtest"); s.add_argument("--ligas", nargs="*"); s.set_defaults(f=cmd_backtest)
     s = sub.add_parser("equipos"); s.add_argument("--liga", required=True); s.set_defaults(f=cmd_equipos)
     s = sub.add_parser("proximos"); s.add_argument("--liga"); s.set_defaults(f=cmd_proximos)
