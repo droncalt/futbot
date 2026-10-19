@@ -78,6 +78,14 @@ class Repositorio {
         paquete = Map<String, dynamic>.from(jsonDecode(guardado));
         lineas('segura'); // valida que se pueda leer; si no, se descarta
         origen = 'guardado';
+        // si la app trae un paquete más nuevo (recién instalada), se usa ese
+        final incluido = Map<String, dynamic>.from(jsonDecode(await rootBundle.loadString('assets/paquete/paquete.json')));
+        if ('${incluido['generado'] ?? ''}'.compareTo('${paquete['generado'] ?? ''}') > 0) {
+          paquete = incluido;
+          origen = 'incluido en la app';
+        }
+        // paquete de una versión anterior (sin probabilidades por línea): pedir uno nuevo al abrir
+        if ((paquete['partidos'] as List? ?? []).any((p) => p['mercados'] == null)) descargado = null;
         return;
       } catch (_) {
         await pref.remove(_kPaquete);
