@@ -13,7 +13,8 @@ informes/
 datos/celular/
 
 # --- Pesado o regenerable (la nube lo vuelve a descargar/calcular) ---
-datos/raw/
+datos/raw/*
+!datos/raw/understat/
 datos/modelos/
 datos/registro_descargas.csv
 datos/evaluacion/predicciones_*.csv

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'comunes.dart';
 import 'boleta.dart' show BuscadorEquipos;
+import 'captura.dart';
 import 'datos.dart';
 import 'vivo.dart';
 
@@ -199,6 +200,12 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
     return ListView(padding: const EdgeInsets.all(12), children: [
       Text('Más', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
       const SizedBox(height: 8),
+      Card(color: Col.tarjeta, child: ListTile(
+        leading: const Icon(Icons.document_scanner), title: const Text('Capturas'),
+        subtitle: const Text('Lee tu combinada de Betano, opina y la sigue en vivo'), trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(
+            appBar: AppBar(backgroundColor: Col.panel, title: const Text('Capturas')), body: const PantallaCapturas()))),
+      )),
       Card(color: Col.tarjeta, child: ListTile(
         leading: const Icon(Icons.menu_book), title: const Text('Reglas de Betano'),
         subtitle: const Text('Multi Bono, Seguro, Pago Anticipado, apuesta mínima…'), trailing: const Icon(Icons.chevron_right),

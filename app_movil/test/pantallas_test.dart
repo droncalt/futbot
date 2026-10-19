@@ -17,7 +17,7 @@ void main() {
     expect(jsonDecode(texto), isA<Map>());
     await t.pumpWidget(const FutBotApp());
     await t.pump(const Duration(seconds: 1));
-    for (final nombre in ['Partidos', 'Historial', 'Más', 'Capturas', 'Boleta']) {
+    for (final nombre in ['Partidos', 'Historial', 'Más', 'Chat', 'En vivo', 'Boleta']) {
       await t.tap(find.text(nombre).last);
       await t.pump(const Duration(milliseconds: 500));
       expect(t.takeException(), isNull, reason: nombre);

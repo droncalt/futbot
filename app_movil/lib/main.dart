@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'boleta.dart';
-import 'captura.dart';
+import 'chat.dart';
 import 'comunes.dart';
 import 'datos.dart';
 import 'historial.dart';
@@ -80,8 +80,8 @@ class _InicioState extends State<Inicio> {
   Widget build(BuildContext context) {
     final paginas = [
       PantallaBoleta(key: ValueKey('b$version')),
+      const PantallaChat(),
       PantallaVivo(key: ValueKey('v$version')),
-      const PantallaCapturas(),
       PantallaPartidos(key: ValueKey('p$version')),
       PantallaHistorial(key: ValueKey('h$version')),
       PantallaAjustes(alActualizar: () => setState(() => version++)),
@@ -105,8 +105,8 @@ class _InicioState extends State<Inicio> {
         onDestinationSelected: (i) => setState(() => pagina = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.receipt_long), label: 'Boleta'),
+          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.live_tv), label: 'En vivo'),
-          NavigationDestination(icon: Icon(Icons.document_scanner), label: 'Capturas'),
           NavigationDestination(icon: Icon(Icons.sports_soccer), label: 'Partidos'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Historial'),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Más'),
