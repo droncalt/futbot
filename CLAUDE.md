@@ -47,7 +47,15 @@ No es un generador de apuestas "seguras": mide probabilidades y su calibración.
 - App Android: `app_movil/` (Flutter). Datos: `bot.py exportar` → `publicar/paquete.json` + escudos; en la nube lo corre
   `.github/workflows/datos_diarios.yml` (GitHub Pages, 6:00 y 18:00 Perú). Compilar con `compilar_apk.bat`: la ruta tiene
   "Ú" y rompe el analizador de Dart y la caché de Kotlin → se usa `subst R:` y `kotlin.incremental=false`; Gradle usa
-  `C:\Users\Asus\develop\certificados\cacerts-con-avast`. Pendiente: que el usuario cree su cuenta de GitHub.
+  `C:\Users\Asus\develop\certificados\cacerts-con-avast`. Nube: repo público droncalt/futbot (gh CLI), Pages
+  https://droncalt.github.io/futbot/ (URL por defecto en la app). `actualizar_celular.bat` = compilar + `adb install` +
+  traer `futbot_aprendizaje.json` del celular (`bot.py celular`: líneas de Betano → `conocimiento/betano_lineas.json`
+  y se suben; patas → `datos/celular/` PRIVADO). Release sin R8 (rompía shared_preferences → pantalla en blanco).
+- App: `chat.dart` (pedidos en español → DP máx. prob. para cuota pedida), `vivo.dart` (ESPN público: marcador,
+  stats, tiros por jugador; prob. en vivo aprox. Poisson; liquida), `captura.dart` (OCR ML Kit en el celular; tuyas o
+  de tipsters; aprende líneas que Betano ofrece). Jugadores: `combinador.linea_min_jugador` (capturas o
+  `JUG_ARCO_1_OCULTA`), patas con `alternativas`. `datos/raw/understat` y `datos/jugadores` van en el repo (la nube
+  no puede rebajarlos en 45 min).
 
 ## Reglas del proyecto
 
