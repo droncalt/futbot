@@ -278,6 +278,15 @@ Avance evaluar(Map<String, dynamic> sel, double pPre, Estado? e, {String? nombre
     case 'corners_visitante':
       valor = e.cornersV;
       que = 'Córners ${e.nv}';
+    case 'tiros_arco':
+      valor = e.stat(true, 'shotsOnTarget') + e.stat(false, 'shotsOnTarget');
+      que = 'Tiros al arco del partido';
+    case 'tiros_arco_local':
+      valor = e.stat(true, 'shotsOnTarget');
+      que = 'Tiros al arco ${e.nl}';
+    case 'tiros_arco_visitante':
+      valor = e.stat(false, 'shotsOnTarget');
+      que = 'Tiros al arco ${e.nv}';
     case 'tarjetas':
       valor = e.tarjetasPts;
       que = 'Tarjetas (amarilla 1, roja 2)';
@@ -549,7 +558,7 @@ class DetallePartido extends StatelessWidget {
     bool resaltar(String k) =>
         (k == 'wonCorners' && marcadas.any((m) => m.startsWith('corners'))) ||
         ((k == 'yellowCards' || k == 'redCards') && marcadas.contains('tarjetas')) ||
-        (k == 'shotsOnTarget' && marcadas.contains('jug_arco'));
+        (k == 'shotsOnTarget' && marcadas.any((m) => m == 'jug_arco' || m.startsWith('tiros_arco')));
     final jugMarcados = [for (final p in (linea['patas'] as List)) if (p['sel']?['jugador_nombre'] != null) '${p['sel']['jugador_nombre']}'];
     final tiradores = [...e.jugadores.where((j) => j.tiros > 0 || jugMarcados.any((n) => parecido(n, j.nombre) > 0.55))]
       ..sort((a, b) => b.tirosArco.compareTo(a.tirosArco) != 0 ? b.tirosArco.compareTo(a.tirosArco) : b.tiros.compareTo(a.tiros));

@@ -6,6 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'captura.dart';
 import 'comunes.dart';
@@ -218,8 +219,9 @@ class Mensaje {
   final bool mio;
   final String texto;
   final List<Opcion>? boleta;
+  final LecturaCaptura? lectura;
   final double monto;
-  Mensaje(this.mio, this.texto, {this.boleta, this.monto = 10});
+  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10});
 }
 
 Future<Mensaje> responder(String texto) async {
@@ -306,7 +308,7 @@ Mensaje _armar(Pedido q) {
   final p = _prod(sel.map((o) => o.p)), c = _prod(sel.map((o) => o.cuota));
   final b = StringBuffer('Te armé esta ${sel.length == 1 ? 'simple' : 'combinada de ${sel.length}'}'
       '${filtro.isEmpty ? '' : ' ($filtro)'}:\n');
-  b.write('Cuota ≈${f2(c)} · prob. de acertar todo ${pct(p)} · de cada 10 así, ≈${(p * 10).round()} se ganan.');
+  b.write('Cuota ≈${f2(c)} · prob. de acertar todo ${pct(p)} · ${deCada10(p)}.');
   for (final x in notas) {
     b.write('\n$x');
   }
@@ -327,10 +329,31 @@ String _analizar(Set<String> equipos) {
         'Local ${x('1')} · Empate ${x('X')} · Visita ${x('2')}\n'
         '1X ${x('1X')} · X2 ${x('X2')} · Más 1.5 ${x('Más 1.5')} · Más 2.5 ${x('Más 2.5')} · Menos 3.5 ${x('Menos 3.5')} · '
         'Ambos anotan ${x('Ambos anotan')}\n'
-        '${m['goles_esperados'] != null ? 'Goles esperados: ${m['goles_esperados']}\n' : ''}\n');
+        '${m['goles_esperados'] != null ? 'Goles esperados: ${m['goles_esperados']}\n' : ''}'
+        '${_extras(m)}\n');
   }
   if (b.isEmpty) return 'Ese equipo no juega en los próximos días en las ligas que analiza el bot.';
   b.write('Pídeme «fijas del ${equipos.first}» para armar una combinada con él.');
+  return b.toString();
+}
+
+String _extras(Map<String, dynamic> m) {
+  final e = Map<String, dynamic>.from(m['esperados'] ?? {});
+  final mer = Map<String, dynamic>.from(m['mercados'] ?? {});
+  String p(String k) => mer[k] == null ? '—' : pct((mer[k] as num).toDouble());
+  final b = StringBuffer();
+  if (mer.isNotEmpty) {
+    b.writeln('Goles: Más 0.5 ${p('goles|mas|0.5')} · Más 1.5 ${p('goles|mas|1.5')} · Menos 4.5 ${p('goles|menos|4.5')}');
+  }
+  if (e['corners'] != null) {
+    b.writeln('Córners esperados ${e['corners']} (${e['corners_local']}-${e['corners_visitante']}) · Más 7.5 ${p('corners|mas|7.5')} · '
+        'Más 8.5 ${p('corners|mas|8.5')}');
+  }
+  if (e['tarjetas'] != null) b.writeln('Tarjetas esperadas ${e['tarjetas']} · Más 2.5 ${p('tarjetas|mas|2.5')} · Más 3.5 ${p('tarjetas|mas|3.5')}');
+  if (e['tiros_arco'] != null) {
+    b.writeln('Tiros al arco esperados ${e['tiros_arco']} (${e['tiros_arco_local']}-${e['tiros_arco_visitante']}) · '
+        'Más 7.5 ${p('tiros_arco|mas|7.5')} (estimación por promedios)');
+  }
   return b.toString();
 }
 
@@ -361,7 +384,8 @@ class PantallaChat extends StatefulWidget {
 class _PantallaChatState extends State<PantallaChat> {
   final mensajes = <Mensaje>[
     Mensaje(false, '¡Hola! Soy FútBot ⚽. Dime qué fijas quieres: «3 fijas para hoy», «cuota 2 con 80%», '
-        '«solo córners de la Premier», «fijas del Barcelona con 20 soles»… Escribe «ayuda» para más ideas.'),
+        '«solo córners de la Premier», «fijas del Barcelona con 20 soles»… También puedes mandarme la captura de tu '
+        'combinada con 🖼️ y te digo qué tan probable es. Escribe «ayuda» para más ideas.'),
   ];
   final ctrl = TextEditingController();
   final scroll = ScrollController();
@@ -382,6 +406,37 @@ class _PantallaChatState extends State<PantallaChat> {
     final r = await responder(texto);
     setState(() => mensajes.add(r));
     await Future.delayed(const Duration(milliseconds: 50));
+    if (scroll.hasClients) scroll.animateTo(scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+  }
+
+  Future<void> _imagen() async {
+    final origen = await showModalBottomSheet<ImageSource>(context: context, backgroundColor: Col.panel, builder: (c) => SafeArea(
+          child: Wrap(children: [
+            ListTile(leading: const Icon(Icons.photo_library), title: const Text('Captura de la galería'),
+                onTap: () => Navigator.pop(c, ImageSource.gallery)),
+            ListTile(leading: const Icon(Icons.photo_camera), title: const Text('Tomar foto'),
+                onTap: () => Navigator.pop(c, ImageSource.camera)),
+          ]),
+        ));
+    if (origen == null) return;
+    setState(() => mensajes.add(Mensaje(true, '📷 Te envío mi combinada')));
+    _bajar();
+    try {
+      final r = await elegirYLeer(origen);
+      if (r == null) {
+        setState(() => mensajes.removeLast());
+        return;
+      }
+      final a = analizar(r);
+      setState(() => mensajes.add(Mensaje(false, a.texto, lectura: r.patas.isEmpty ? null : r, monto: r.monto ?? 0)));
+    } catch (e) {
+      setState(() => mensajes.add(Mensaje(false, 'No pude leer la imagen ($e). Prueba con otra captura.')));
+    }
+    _bajar();
+  }
+
+  Future<void> _bajar() async {
+    await Future.delayed(const Duration(milliseconds: 80));
     if (scroll.hasClients) scroll.animateTo(scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
@@ -407,9 +462,8 @@ class _PantallaChatState extends State<PantallaChat> {
         color: Col.panel,
         padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
         child: Row(children: [
-          IconButton(tooltip: 'Subir captura', icon: const Icon(Icons.add_a_photo_outlined),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(
-                  appBar: AppBar(backgroundColor: Col.panel, title: const Text('Capturas')), body: const PantallaCapturas())))),
+          IconButton(tooltip: 'Enviar captura o foto', icon: const Icon(Icons.add_photo_alternate_outlined, color: Col.naranja),
+              onPressed: _imagen),
           Expanded(child: TextField(
             controller: ctrl,
             textInputAction: TextInputAction.send,
@@ -426,7 +480,7 @@ class _PantallaChatState extends State<PantallaChat> {
   Widget _burbuja(Mensaje m) => Align(
         alignment: m.mio ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * (m.boleta != null ? 0.95 : 0.85)),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * (m.boleta != null || m.lectura != null ? 0.95 : 0.85)),
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -436,6 +490,7 @@ class _PantallaChatState extends State<PantallaChat> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             SelectableText(m.texto),
             if (m.boleta != null) BoletaChat(opciones: m.boleta!, montoInicial: m.monto),
+            if (m.lectura != null) AccionesCaptura(lectura: m.lectura!, montoInicial: m.monto),
           ]),
         ),
       );
@@ -546,4 +601,54 @@ class _BoletaChatState extends State<BoletaChat> {
       ),
     );
   }
+}
+
+/// Botones bajo el análisis de una captura: guardar como apostada o solo seguir, de quién es, corregir.
+class AccionesCaptura extends StatefulWidget {
+  final LecturaCaptura lectura;
+  final double montoInicial;
+  const AccionesCaptura({super.key, required this.lectura, required this.montoInicial});
+  @override
+  State<AccionesCaptura> createState() => _AccionesCapturaState();
+}
+
+class _AccionesCapturaState extends State<AccionesCaptura> {
+  late final montoCtrl = TextEditingController(text: widget.montoInicial > 0 ? f2(widget.montoInicial) : '');
+  final autorCtrl = TextEditingController();
+  bool mia = true, guardada = false;
+
+  Future<void> _guardar(bool apostada) async {
+    await guardarLectura(widget.lectura,
+        monto: apostada ? (double.tryParse(montoCtrl.text.replaceAll(',', '.')) ?? 0) : 0,
+        autor: mia ? 'yo' : 'tipster:${autorCtrl.text.trim().isEmpty ? 'sin nombre' : autorCtrl.text.trim()}');
+    setState(() => guardada = true);
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(height: 8),
+        Wrap(spacing: 6, children: [
+          ChoiceChip(label: const Text('Es mía'), selected: mia, onSelected: guardada ? null : (_) => setState(() => mia = true)),
+          ChoiceChip(label: const Text('Me la mandaron'), selected: !mia, onSelected: guardada ? null : (_) => setState(() => mia = false)),
+        ]),
+        if (!mia && !guardada)
+          TextField(controller: autorCtrl, decoration: const InputDecoration(isDense: true, labelText: '¿Quién? (ej. lasfijas)')),
+        Row(children: [
+          const Text('S/ '),
+          SizedBox(width: 80, child: TextField(controller: montoCtrl, enabled: !guardada,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(isDense: true))),
+        ]),
+        const SizedBox(height: 6),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          FilledButton.icon(onPressed: guardada ? null : () => _guardar(true), icon: const Icon(Icons.check),
+              label: Text(guardada ? 'Guardada' : 'La aposté')),
+          OutlinedButton.icon(onPressed: guardada ? null : () => _guardar(false), icon: const Icon(Icons.visibility),
+              label: const Text('Solo seguir')),
+          TextButton.icon(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(
+                  appBar: AppBar(backgroundColor: Col.panel, title: const Text('Corregir lectura')),
+                  body: PantallaCapturas(inicial: widget.lectura)))),
+              icon: const Icon(Icons.edit), label: const Text('Corregir')),
+        ]),
+        if (guardada) const Text('✅ La sigo en «En vivo» y te digo si se cumplió o se perdió.', style: TextStyle(color: Color(0xFF34D399))),
+      ]);
 }

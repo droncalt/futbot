@@ -87,6 +87,7 @@ class _PantallaPartidosState extends State<PantallaPartidos> {
                     liga: '${p['liga']}', local: local.nombre, visitante: visit.nombre, inicio: ini))),
                 child: const Text('📡 En vivo / estadísticas', style: TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w800))),
           ]),
+          ...ExtrasPartido.de(p),
         ]),
       ),
     );
@@ -202,7 +203,7 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
       const SizedBox(height: 8),
       Card(color: Col.tarjeta, child: ListTile(
         leading: const Icon(Icons.document_scanner), title: const Text('Capturas'),
-        subtitle: const Text('Lee tu combinada de Betano, opina y la sigue en vivo'), trailing: const Icon(Icons.chevron_right),
+        subtitle: const Text('Cargar o corregir una combinada a mano (lo fácil: mándala en el Chat)'), trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(
             appBar: AppBar(backgroundColor: Col.panel, title: const Text('Capturas')), body: const PantallaCapturas()))),
       )),
@@ -240,6 +241,75 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
       const SizedBox(height: 12),
       const Text('Juega con responsabilidad · Mayores de 18 · Ninguna apuesta es segura.',
           style: TextStyle(color: Col.suave, fontSize: 12)),
+    ]);
+  }
+}
+
+/// Esperados del partido en una línea + desplegable con las probabilidades de más líneas (sin recargar la tarjeta).
+class ExtrasPartido extends StatefulWidget {
+  final Map<String, dynamic> p;
+  const ExtrasPartido(this.p, {super.key});
+
+  static List<Widget> de(Map<String, dynamic> p) =>
+      (p['esperados'] == null && p['mercados'] == null) ? [] : [const SizedBox(height: 6), ExtrasPartido(p)];
+
+  @override
+  State<ExtrasPartido> createState() => _ExtrasPartidoState();
+}
+
+class _ExtrasPartidoState extends State<ExtrasPartido> {
+  bool abierto = false;
+
+  static const _grupos = [
+    ('⚽ Goles', [('goles|mas|0.5', 'Más 0.5'), ('goles|mas|1.5', 'Más 1.5'), ('goles|mas|2.5', 'Más 2.5'),
+      ('goles|menos|3.5', 'Menos 3.5'), ('goles|menos|4.5', 'Menos 4.5'), ('1t_goles|mas|0.5', '1.er T Más 0.5')]),
+    ('🏠 Por equipo', [('goles_local|mas|0.5', 'Local anota'), ('goles_visitante|mas|0.5', 'Visita anota'),
+      ('doble|1X|', '1X'), ('doble|X2|', 'X2'), ('doble|12|', '12'), ('btts|no|', 'No ambos')]),
+    ('⛳ Córners', [('corners|mas|6.5', 'Más 6.5'), ('corners|mas|7.5', 'Más 7.5'), ('corners|mas|8.5', 'Más 8.5'),
+      ('corners|mas|9.5', 'Más 9.5'), ('corners_local|mas|2.5', 'Local Más 2.5'), ('corners_visitante|mas|2.5', 'Visita Más 2.5')]),
+    ('🟨 Tarjetas', [('tarjetas|mas|1.5', 'Más 1.5'), ('tarjetas|mas|2.5', 'Más 2.5'), ('tarjetas|mas|3.5', 'Más 3.5'),
+      ('tarjetas|menos|5.5', 'Menos 5.5')]),
+    ('🎯 Tiros al arco', [('tiros_arco|mas|5.5', 'Más 5.5'), ('tiros_arco|mas|6.5', 'Más 6.5'), ('tiros_arco|mas|7.5', 'Más 7.5'),
+      ('tiros_arco|mas|8.5', 'Más 8.5'), ('tiros_arco_local|mas|2.5', 'Local Más 2.5'), ('tiros_arco_visitante|mas|2.5', 'Visita Más 2.5')]),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final e = Map<String, dynamic>.from(widget.p['esperados'] ?? {});
+    final m = Map<String, dynamic>.from(widget.p['mercados'] ?? {});
+    String x(String k) => e[k] == null ? '' : (e[k] as num).toStringAsFixed(1);
+    final resumen = [
+      if (e['corners'] != null) '⛳ ${x('corners')} córners',
+      if (e['tarjetas'] != null) '🟨 ${x('tarjetas')} tarjetas',
+      if (e['tiros_arco'] != null) '🎯 ${x('tiros_arco')} al arco',
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      InkWell(
+        onTap: () => setState(() => abierto = !abierto),
+        child: Row(children: [
+          Expanded(child: Text(resumen.isEmpty ? 'Más líneas del partido' : 'Esperado: ${resumen.join(' · ')}',
+              style: const TextStyle(color: Col.suave, fontSize: 12.5))),
+          Text(abierto ? 'Menos ▲' : 'Más líneas ▼', style: const TextStyle(color: Col.naranja, fontSize: 12, fontWeight: FontWeight.w800)),
+        ]),
+      ),
+      if (abierto)
+        for (final g in _grupos)
+          if (g.$2.any((c) => m[c.$1] != null))
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(g.$1, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+                const SizedBox(height: 3),
+                Wrap(spacing: 5, runSpacing: 5, children: [
+                  for (final c in g.$2)
+                    if (m[c.$1] != null) ChipProb((m[c.$1] as num).toDouble(), sufijo: ' ${c.$2}'),
+                ]),
+              ]),
+            ),
+      if (abierto && e['tiros_arco'] != null)
+        const Padding(padding: EdgeInsets.only(top: 4), child: Text(
+            'Tiros al arco: estimación por promedios de los últimos 10 partidos (sin backtest todavía).',
+            style: TextStyle(color: Col.suave, fontSize: 11))),
     ]);
   }
 }

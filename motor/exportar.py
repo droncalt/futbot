@@ -12,7 +12,9 @@ import datetime as dt
 import json
 import shutil
 
+import numpy as np
 import pandas as pd
+from scipy.stats import poisson
 
 from . import analisis as A
 from . import betano as B
@@ -21,6 +23,7 @@ from . import config as C
 from . import datos
 from . import equipos as EQ
 from . import fijas as F
+from . import mercados as M
 
 DIR_PUBLICAR = C.RAIZ / "publicar"
 VERSION_PAQUETE = 1
@@ -59,6 +62,8 @@ def _partidos(escudos: set) -> list[dict]:
     if tp.empty:
         return []
     cols = [n for n, _ in A.SELECCIONES_TABLA]
+    w, _ = A.peso_modelo()
+    hist = datos.cargar_partidos().sort_values("fecha")
     out = []
     for _, f in tp.iterrows():
         out.append({"liga": f.liga, "liga_nombre": C.LIGAS.get(f.liga, f.liga),
@@ -66,8 +71,83 @@ def _partidos(escudos: set) -> list[dict]:
                     "local": _equipo(f.local, escudos), "visitante": _equipo(f.visitante, escudos),
                     "goles_esperados": None if pd.isna(f.goles_esperados) else float(f.goles_esperados),
                     "prob": {c: (None if pd.isna(f[c]) else round(float(f[c]), 4)) for c in cols},
-                    "betano": EQ.enlace_liga(f.liga)})
+                    "betano": EQ.enlace_liga(f.liga)} | _detalle(f.liga, f.local, f.visitante, w, hist))
     return out
+
+
+# Líneas que la app puede evaluar de una captura (clave "mercado|opcion|linea", como Seleccion)
+_GRILLA = ([("1x2", o, None) for o in ("local", "empate", "visitante")] + [("doble", o, None) for o in ("1X", "X2", "12")]
+           + [("btts", o, None) for o in ("si", "no")]
+           + [(m, o, l) for m, ls in (("goles", M.LINEAS_GOLES), ("goles_local", [0.5, 1.5, 2.5]),
+                                      ("goles_visitante", [0.5, 1.5, 2.5]), ("1t_goles", [0.5, 1.5, 2.5]),
+                                      ("2t_goles", [0.5, 1.5, 2.5]),
+                                      ("corners", [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]),
+                                      ("corners_local", [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5]),
+                                      ("corners_visitante", [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5]),
+                                      ("tarjetas", [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]))
+              for l in ls for o in ("mas", "menos")]
+           + [("1t_1x2", o, None) for o in ("local", "empate", "visitante")])
+
+
+def _clave(m, o, l) -> str:
+    return f"{m}|{o}|{'' if l is None else l}"
+
+
+def _promedios(hist: pd.DataFrame, equipo: str, n: int = 10) -> dict:
+    """Promedio de los últimos n partidos del equipo: a favor y en contra (tiros al arco, córners, tarjetas)."""
+    h = hist[(hist["local"] == equipo) | (hist["visitante"] == equipo)].tail(n)
+    if h.empty:
+        return {}
+    loc = h["local"] == equipo
+    out = {}
+    for k, cl, cv in (("arco", "arco_l", "arco_v"), ("corners", "corn_l", "corn_v"), ("amarillas", "ama_l", "ama_v")):
+        if cl not in h or h[cl].isna().all():
+            continue
+        fav = np.where(loc, h[cl], h[cv])
+        con = np.where(loc, h[cv], h[cl])
+        out[k] = (float(np.nanmean(fav)), float(np.nanmean(con)))
+    return out
+
+
+def _detalle(liga, local, visitante, w, hist) -> dict:
+    """Probabilidad del bot para muchas líneas del partido + valores esperados (córners, tarjetas, tiros al arco)."""
+    try:
+        pt = CB._Partido(liga, local, visitante, w)
+    except Exception:
+        return {}
+    mer, esp = {}, {"goles": round(pt.mod.lam + pt.mod.mu, 2), "goles_local": round(pt.mod.lam, 2),
+                    "goles_visitante": round(pt.mod.mu, 2)}
+    for m, o, l in _GRILLA:
+        fam = M.MERCADOS[m]["familia"]
+        if (fam == "corners" and pt.mod.corners is None) or (fam == "tarjetas" and pt.mod.tarjetas is None):
+            continue
+        try:
+            s = M.Seleccion(m, o, l)
+            p = F.calibrar(s, M.combinar(*pt.bruta([s]), w))
+        except Exception:
+            p = None
+        if p is not None:
+            mer[_clave(m, o, l)] = round(float(p), 4)
+    for nombre, Mx in (("corners", pt.mod.corners), ("tarjetas", pt.mod.tarjetas)):
+        if Mx is not None:
+            k = np.arange(Mx.shape[0])
+            el, ev = float((Mx.sum(1) * k).sum()), float((Mx.sum(0) * np.arange(Mx.shape[1])).sum())
+            esp[nombre] = round(el + ev, 2)
+            esp[f"{nombre}_local"], esp[f"{nombre}_visitante"] = round(el, 2), round(ev, 2)
+    # tiros al arco: promedio simple de lo que cada uno genera y concede (no hay modelo con backtest: estimación)
+    pl, pv = _promedios(hist, local), _promedios(hist, visitante)
+    if "arco" in pl and "arco" in pv:
+        al = (pl["arco"][0] + pv["arco"][1]) / 2
+        av = (pv["arco"][0] + pl["arco"][1]) / 2
+        esp.update(tiros_arco=round(al + av, 2), tiros_arco_local=round(al, 2), tiros_arco_visitante=round(av, 2))
+        for m, lam, lineas in (("tiros_arco", al + av, [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]),
+                               ("tiros_arco_local", al, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]),
+                               ("tiros_arco_visitante", av, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5])):
+            for l in lineas:
+                pm = float(poisson.sf(int(l), lam))
+                mer[_clave(m, "mas", l)] = round(pm, 4)
+                mer[_clave(m, "menos", l)] = round(1 - pm, 4)
+    return {"mercados": mer, "esperados": esp}
 
 
 def _resultados(dias: int = 10) -> list[dict]:

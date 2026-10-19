@@ -86,3 +86,9 @@ String diaHora(DateTime d) {
   String dos(int x) => x.toString().padLeft(2, '0');
   return '${dias[d.weekday - 1]} ${dos(d.day)}/${dos(d.month)} ${dos(d.hour)}:${dos(d.minute)}';
 }
+
+/// "de cada 10 así, ≈7 se ganan" (o "menos de 1 se gana").
+String deCada10(double p) {
+  final n = (p * 10).round();
+  return n == 0 ? 'de cada 10 así, menos de 1 se gana' : n == 1 ? 'de cada 10 así, ≈1 se gana' : 'de cada 10 así, ≈$n se ganan';
+}
