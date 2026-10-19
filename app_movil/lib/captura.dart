@@ -311,6 +311,8 @@ class _PantallaCapturasState extends State<PantallaCapturas> {
   bool verTexto = false;
   final montoCtrl = TextEditingController();
   final cuotaCtrl = TextEditingController();
+  bool mia = true; // false = me la mandaron (tipster, grupo de Telegram…)
+  final autorCtrl = TextEditingController();
 
   Future<void> _elegir(ImageSource origen) async {
     final img = await ImagePicker().pickImage(source: origen, imageQuality: 95);
@@ -373,7 +375,8 @@ class _PantallaCapturasState extends State<PantallaCapturas> {
     }
     await Historial.guardar({
       'id': DateTime.now().millisecondsSinceEpoch, 'fecha': DateTime.now().toIso8601String(),
-      'tipo': monto > 0 ? 'apostada' : 'seguimiento', 'origen': 'captura', 'monto': monto, 'cuota': _cuota, 'p': pTot,
+      'tipo': monto > 0 ? 'apostada' : 'seguimiento', 'origen': 'captura', 'monto': monto,
+      'autor': mia ? 'yo' : 'tipster:${autorCtrl.text.trim().isEmpty ? 'sin nombre' : autorCtrl.text.trim()}', 'cuota': _cuota, 'p': pTot,
       'estado': 'pendiente', 'lineas': ls,
     });
     if (!mounted) return;
@@ -417,6 +420,13 @@ class _PantallaCapturasState extends State<PantallaCapturas> {
   List<Widget> _revision(LecturaCaptura r) => [
         const SizedBox(height: 10),
         const Text('Revisa y corrige lo que leí', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        Wrap(spacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          ChoiceChip(label: const Text('Mi apuesta'), selected: mia, onSelected: (_) => setState(() => mia = true)),
+          ChoiceChip(label: const Text('Me la mandaron'), selected: !mia, onSelected: (_) => setState(() => mia = false)),
+        ]),
+        if (!mia)
+          TextField(controller: autorCtrl, decoration: const InputDecoration(
+              labelText: '¿Quién? (ej. lasfijas, grupo Telegram)', helperText: 'Así mido cuánto acierta cada uno')),
         for (var i = 0; i < r.partidos.length; i++) ..._partido(r, i),
         TextButton.icon(onPressed: () => setState(() => r.partidos.add(PartidoCaptura('', ''))),
             icon: const Icon(Icons.add), label: const Text('Agregar partido')),

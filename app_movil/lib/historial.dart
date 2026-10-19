@@ -80,6 +80,20 @@ class Historial {
     return cambios;
   }
 
+  /// Boletas resueltas por quién las propuso: FútBot, tú o cada tipster. → [ganadas, total, suma prob.]
+  static Map<String, List<double>> porAutor(List<Map<String, dynamic>> b) {
+    final out = <String, List<double>>{};
+    for (final x in b.where((x) => x['estado'] == 'ganada' || x['estado'] == 'perdida')) {
+      final a = '${x['autor'] ?? (x['origen'] == 'captura' ? 'yo' : 'FútBot')}';
+      final nombre = a == 'yo' ? 'Mis apuestas' : a.startsWith('tipster:') ? a.substring(8) : a;
+      final v = out.putIfAbsent(nombre, () => [0, 0, 0]);
+      v[0] += x['estado'] == 'ganada' ? 1 : 0;
+      v[1] += 1;
+      v[2] += ((x['p'] ?? 0) as num).toDouble();
+    }
+    return out;
+  }
+
   /// Acierto real por tipo de mercado vs lo que prometía el bot (patas ya resueltas).
   static Map<String, List<double>> porMercado(List<Map<String, dynamic>> b) {
     final out = <String, List<double>>{}; // mercado → [aciertos, total, suma prob]
@@ -246,6 +260,7 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
           _dato('Lo que esperaba el bot', todas.isEmpty ? '—' : pct(esperado)),
         ]),
         const SizedBox(height: 10),
+        ..._porAutor(),
         ..._porMercado(),
         if (boletas.isEmpty)
           const Text('Aún no guardaste boletas. En la Súper boleta pulsa «La aposté» o 👁️ (seguimiento).',
@@ -253,6 +268,24 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
         for (final b in boletas) _tarjeta(b),
       ]),
     );
+  }
+
+  List<Widget> _porAutor() {
+    final m = Historial.porAutor(boletas);
+    if (m.isEmpty) return [];
+    return [
+      const Text('¿Quién acierta más? (boletas resueltas)', style: TextStyle(fontWeight: FontWeight.w800)),
+      for (final e in m.entries)
+        ListTile(
+          dense: true,
+          leading: Text(e.key == 'FútBot' ? '🤖' : e.key == 'Mis apuestas' ? '🙋' : '📣'),
+          title: Text(e.key),
+          subtitle: Text('${e.value[0].toInt()}/${e.value[1].toInt()} combinadas ganadas'),
+          trailing: Text('${pct(e.value[0] / e.value[1])} real · ${pct(e.value[2] / e.value[1])} esperado',
+              style: const TextStyle(fontWeight: FontWeight.w800)),
+        ),
+      const SizedBox(height: 8),
+    ];
   }
 
   List<Widget> _porMercado() {

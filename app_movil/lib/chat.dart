@@ -108,6 +108,18 @@ String familiaDe(Pata p) {
   return 'goles';
 }
 
+/// Lo aprendido de tus patas resueltas (mercado → [aciertos, total, suma prob. prometida]).
+Map<String, List<double>> aprendido = {};
+
+/// Corrige la probabilidad de una pata con tu historial, con encogimiento k = n/(n+300) (igual que la
+/// calibración del backtest): con pocas patas casi no cambia; con cientos pesa de verdad.
+double corregir(String mercado, double p) {
+  final v = aprendido[mercado];
+  if (v == null || v[1] < 5) return p;
+  final k = v[1] / (v[1] + 300);
+  return (p + k * (v[0] / v[1] - v[2] / v[1])).clamp(0.02, 0.99).toDouble();
+}
+
 List<Opcion> opciones(Pedido q) {
   final ahora = DateTime.now();
   final hoy = DateTime(ahora.year, ahora.month, ahora.day);
@@ -122,7 +134,12 @@ List<Opcion> opciones(Pedido q) {
       if (q.ligas.isNotEmpty && !q.ligas.contains(l.liga)) continue;
       if (q.equipos.isNotEmpty && !q.equipos.any((e) => parecido(e, l.local.nombre) > 0.8 || parecido(e, l.visitante.nombre) > 0.8)) continue;
       for (final e in l.sub.entries) {
-        final o = Opcion(l, e.key, e.value.p, e.value.cuota, e.value.estimada);
+        var o = Opcion(l, e.key, e.value.p, e.value.cuota, e.value.estimada);
+        var factor = 1.0;
+        for (final pa in o.patas) {
+          factor *= corregir('${pa.sel['mercado']}', pa.p) / pa.p;
+        }
+        if (factor != 1.0) o = Opcion(l, e.key, (o.p * factor).clamp(0.01, 0.99).toDouble(), o.cuota, o.estimada);
         final fams = o.patas.map(familiaDe).toSet();
         if (fams.any(q.sinFamilias.contains)) continue;
         if (q.familias.isNotEmpty && !fams.every(q.familias.contains)) continue;
@@ -293,6 +310,8 @@ Mensaje _armar(Pedido q) {
   for (final x in notas) {
     b.write('\n$x');
   }
+  final nAprendidas = aprendido.values.fold<double>(0, (a, v) => a + v[1]).toInt();
+  if (nAprendidas >= 5) b.write('\nProbabilidades ajustadas con $nAprendidas patas resueltas de tu historial.');
   if (sel.any((o) => o.estimada)) b.write('\nCuotas con ≈ son estimadas: confírmalas en Betano antes de apostar.');
   return Mensaje(false, b.toString(), boleta: sel, monto: monto);
 }
@@ -349,6 +368,12 @@ class _PantallaChatState extends State<PantallaChat> {
 
   static const sugerencias = ['3 fijas para hoy', 'cuota 2 con 80%', 'ultra segura de mañana', 'cuota 5 equilibrada',
     'solo goles, 4 partidos', '¿el bot acierta?', 'cómo voy'];
+
+  @override
+  void initState() {
+    super.initState();
+    Historial.cargar().then((b) => aprendido = Historial.porMercado(b));
+  }
 
   Future<void> _enviar(String texto) async {
     if (texto.trim().isEmpty) return;

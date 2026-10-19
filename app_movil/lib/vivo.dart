@@ -76,6 +76,7 @@ class Estado {
   List<String> eventos = [];
   DateTime leido = DateTime.now();
 
+  String get gamecast => 'https://www.espn.com/soccer/match/_/gameId/$id';
   int stat(bool local, String k) => (double.tryParse((local ? sl : sv)[k] ?? '') ?? 0).round();
   int get cornersL => stat(true, 'wonCorners');
   int get cornersV => stat(false, 'wonCorners');
@@ -558,6 +559,15 @@ class DetallePartido extends StatelessWidget {
         Center(child: Text('${e.gl} - ${e.gv}', style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900))),
         Center(child: Text(e.terminado ? 'Final' : e.estado == 'pre' ? 'Por empezar' : e.reloj,
             style: const TextStyle(color: Col.suave))),
+        const SizedBox(height: 8),
+        Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 6, children: [
+          FilledButton.icon(onPressed: () => abrir('https://www.betano.pe/live/'), icon: const Icon(Icons.live_tv),
+              label: const Text('Ver en Betano En Vivo')),
+          OutlinedButton.icon(onPressed: () => abrir(e.gamecast), icon: const Icon(Icons.sports_soccer),
+              label: const Text('Gamecast ESPN')),
+        ]),
+        const Text('Si Betano transmite el partido, lo ves ahí con tu cuenta. El Gamecast va jugada a jugada.',
+            textAlign: TextAlign.center, style: TextStyle(color: Col.suave, fontSize: 11.5)),
         const SizedBox(height: 10),
         if ((linea['patas'] as List).isNotEmpty)
           const Text('Lo que marcó el bot', style: TextStyle(fontWeight: FontWeight.w800, color: Col.naranja)),
