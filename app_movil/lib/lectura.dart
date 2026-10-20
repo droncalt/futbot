@@ -81,10 +81,15 @@ const _diasSemana = {'lun': 1, 'mar': 2, 'mie': 3, 'jue': 4, 'vie': 5, 'sab': 6,
 _Renglon _limpiar(String crudo) {
   var t = crudo;
   final r = _Renglon('');
-  final m = RegExp(r'Marcador\s*(\d+)\s*[-:]\s*(\d+)', caseSensitive: false).firstMatch(t);
+  // «OMarcador 0-2» (la O es el ícono), «Marca dor 21»; la O solo se quita si no es parte de una palabra (Huancayo)
+  final m = RegExp(r'(?:(?<!\p{L})[0O])?\s*Marca\s*dor\s*(\d{1,2})\s*[-–:]\s*(\d{1,2})', caseSensitive: false, unicode: true)
+          .firstMatch(t) ??
+      RegExp(r'(?:(?<!\p{L})[0O])?\s*Marca\s*dor\s*(\d)(\d)\b', caseSensitive: false, unicode: true).firstMatch(t);
   if (m != null) {
     r.marcador = '${m.group(1)}-${m.group(2)}';
     t = t.replaceRange(m.start, m.end, ' ');
+  } else if (RegExp(r'marca\s*dor|marcador', caseSensitive: false).hasMatch(t)) {
+    t = t.replaceAll(RegExp(r'(?:(?<!\p{L})[0O])?\s*marca\s*dor.*$', caseSensitive: false, unicode: true), ' ');
   }
   final h = RegExp(r'(\d{1,2}):(\d{2})').firstMatch(t);
   if (h != null) {
@@ -132,10 +137,15 @@ _Renglon _limpiar(String crudo) {
       .trim();
   // restos del escudo pegados al nombre: ")Francia", "D UTC De Cajamarca"
   t = t.replaceFirst(RegExp(r'^[^\p{L}\d]+', unicode: true), '')
+      .replaceFirst(RegExp(r'^\d{1,2}\s+(?=(M[aá]s|Menos|Bet|Ambos|Doble|S[ií]\b|No\b))', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'^\p{L}[).:,]?\s+(?=\p{Lu})', unicode: true), '')
       .replaceFirst(RegExp(r'^[A-Z] (?=[A-Z]{2,}|[A-Z]\p{Ll})', unicode: true), '');
+  if (t.replaceAll(RegExp(r'[^\p{L}]', unicode: true), '').length < 3 && !RegExp(r'\d').hasMatch(t)) t = '';
   r.texto = t;
   return r;
 }
+
+bool _esRuido(String n) => _ruido.contains(n) || RegExp(r'pago|anticipad|cipado|realizacion|^gratis$').hasMatch(n);
 
 const _ruido = ['betano', 'cupon apuestas', 'guardar', 'compartir', 'simple', 'combinadas', 'sistema', 'abiertas',
   'resueltas', 'ganadas', 'cash out', 'perdidas', 'anuladas', 'deposito', 'inicio', 'en vivo', 'deportes', 'apuestas',
@@ -151,7 +161,8 @@ final _palabrasMercado = RegExp(
     caseSensitive: false);
 
 // segundas mitades de un mercado partido en dos renglones («… Primer» / «Tiempo», «… Tiros al» / «Arco»)
-const _palabrasMercado2 = ['tiempo', 'arco', 'anotan', 'marcan', 'oportunidad', 'momento', 'tiros al', 'goles en primer'];
+const _palabrasMercado2 = ['tiempo', 'arco', 'anotan', 'marcan', 'oportunidad', 'momento', 'tiros al', 'goles en primer',
+  'doble', 'resultado', 'goles totales', 'corners', 'ambos equipos'];
 
 bool _esMercado(String n) =>
     (_claveMercado.any(n.contains) || _palabrasMercado2.any((k) => ' $n '.contains(' $k '))) && !RegExp(r'^(mas|menos) \d').hasMatch(n);
@@ -173,31 +184,37 @@ LecturaCaptura leerTexto(List<String> crudos) {
       if (f != null) r.fechaApuesta = DateTime(int.parse(f.group(3)!), int.parse(f.group(2)!), int.parse(f.group(1)!));
       continue;
     }
-    if (n0.contains('apuesta gratis')) r.gratis = true;
+    if (n0.contains('apuesta gratis') || n0 == 'gratis') r.gratis = true;
+    if (n0.startsWith('fecha')) {
+      final f = RegExp(r'(\d{1,2})/(\d{1,2})/(\d{4})').firstMatch(c);
+      if (f != null) r.fechaApuesta = DateTime(int.parse(f.group(3)!), int.parse(f.group(2)!), int.parse(f.group(1)!));
+      continue;
+    }
     if (n0.startsWith('id ') || n0 == 'id' || n0.startsWith('fecha de')) continue;
     if (RegExp(r'^(simple|doble|triple|sistema)\b').hasMatch(n0) && RegExp(r'[sS]/').hasMatch(c)) {
-      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
-      if (monto != null) r.monto ??= _num(monto.group(1)!);
+      final monto = _soles(c);
+      if (monto != null) r.monto ??= monto;
       continue;
     }
     if (RegExp(r'^apuesta\b').hasMatch(n0) && RegExp(r'[sS]/').hasMatch(c)) {
-      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
-      if (monto != null) r.monto ??= _num(monto.group(1)!);
+      final monto = _soles(c);
+      if (monto != null) r.monto = monto; // la fila «Apuesta» es más confiable que la cabecera
+      if (n0.contains('gratis')) r.gratis = true;
       continue;
     }
     if (RegExp(r'^ganancia').hasMatch(n0)) {
-      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
-      if (monto != null) r.ganancia = _num(monto.group(1)!);
+      final monto = _soles(c);
+      if (monto != null) r.ganancia = monto;
       continue;
     }
     if (n0.startsWith('combinada') || n0.contains('colocar apuesta') || n0.contains('ganancia potencial') ||
         n0.contains('importe') || n0.contains('apuesta total')) {
-      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
+      final monto = _soles(c);
       if (n0.contains('ganancia')) {
-        if (monto != null) r.ganancia = _num(monto.group(1)!);
+        if (monto != null) r.ganancia = monto;
         continue;
       }
-      if (monto != null) r.monto ??= _num(monto.group(1)!);
+      if (monto != null) r.monto ??= monto;
       final sinMonto = c.replaceAll(RegExp(r'[sS]/\.?\s*\d{1,6}(?:[.,]\d{1,2})?'), ' ');
       final cuotas = RegExp(r'(\d{1,4}[.,]\d{2})').allMatches(sinMonto).map((m) => _num(m.group(1)!)).whereType<double>();
       if (cuotas.isNotEmpty && n0.startsWith('combinada')) r.cuotaTotal = cuotas.last;
@@ -206,7 +223,7 @@ LecturaCaptura leerTexto(List<String> crudos) {
     final x = _limpiar(c);
     if (x.texto.isEmpty && x.cuota == null && x.hora == null && x.dia == null && x.marcador == null && x.fecha == null) continue;
     final n = x.n;
-    if (x.texto.isEmpty || RegExp(r'^\d+ ?\d*$').hasMatch(x.texto.trim()) || _ruido.contains(n) ||
+    if (x.texto.isEmpty || RegExp(r'^\d+ ?\d*$').hasMatch(x.texto.trim()) || _esRuido(n) ||
         RegExp(r'^\d+/\d+$').hasMatch(x.texto)) {
       x.tipo = 'aux';
     } else if (n.contains('bet builder') || n.contains('crear apuesta')) {
@@ -254,6 +271,11 @@ LecturaCaptura leerTexto(List<String> crudos) {
             RegExp(r'[A-Za-zÁÉÍÓÚÑáéíóúñ]{4}').hasMatch(resto)) {
           cur.equipos.add(resto);
           ultima.textoMercado = '${ultima.textoMercado} ${x.texto.replaceAll(resto, '')}'.trim();
+        } else if (ultima != null && cur != null && _mercadoCompleto(ultima.textoMercado) && _iniciaMercado(x.n)) {
+          // «Más de 2.5 / Goles totales Más/Menos / Ambos equipos anotan»: falta la selección de Ambos anotan (el
+          // OCR perdió el «Sí» con el ✓): se agrega como otra pata con la opción por defecto
+          ultima = PataCaptura('otro', '', textoSel: '', textoMercado: x.texto);
+          cur.patas.add(ultima);
         } else if (ultima != null) {
           ultima.textoMercado = '${ultima.textoMercado} ${x.texto}'.trim();
         }
@@ -272,7 +294,7 @@ LecturaCaptura leerTexto(List<String> crudos) {
     final pc = t.p;
     pc.local = t.equipos.isNotEmpty ? t.equipos[0] : '';
     pc.visitante = t.equipos.length > 1 ? t.equipos[1] : '';
-    _reconocer(pc, [for (final p in t.patas) p.textoMercado]);
+    if (pc.marcador == null) _reconocer(pc, [for (final p in t.patas) p.textoMercado]); // con marcador: partido ya jugado
     final ahora = DateTime.now();
     if (pc.inicio == null && t.hora != null) {
       final base = t.fecha ?? DateTime(ahora.year, ahora.month, ahora.day).add(Duration(days: t.dia ?? 0));
@@ -348,6 +370,11 @@ void _interpretar(PataCaptura p, PartidoCaptura pc) {
   final n = normal(p.textoMercado), s = p.textoSel, ns = normal(s);
   final lm = RegExp(r'(\d{1,2}[.,]5)').firstMatch(s);
   p.linea = lm == null ? null : _num(lm.group(1)!);
+  if (p.linea == null) {
+    // OCR sin punto o con letra: «Más 05» = 0.5, «Más 1.s» = 1.5
+    final l2 = RegExp(r'(?:m[aá]s|menos|over|under)\s*(?:de\s*)?(\d)(?:[.,]?[5sS])(?!\d)', caseSensitive: false).firstMatch(s);
+    if (l2 != null) p.linea = int.parse(l2.group(1)!) + 0.5;
+  }
   final mas = RegExp(r'^(m[aá]s|over)', caseSensitive: false).hasMatch(s.trim());
   final menos = RegExp(r'^(menos|under)', caseSensitive: false).hasMatch(s.trim());
   final mm = mas ? 'mas' : menos ? 'menos' : '';
@@ -592,4 +619,20 @@ double? probGuardada(String local, String visitante, Map<String, dynamic> sel) {
     return v == null ? null : (sel['opcion'] == 'no' ? 1 - v : v);
   }
   return null;
+}
+
+bool _mercadoCompleto(String t) {
+  final n = normal(t);
+  return (n.contains('goles totales') && n.contains('mas menos')) || n.contains('ambos equipos anotan') ||
+      n.contains('oportunidad') || (n.contains('resultado') && !n.endsWith('resultado')) || n.contains('corners') ||
+      n.contains('tarjetas') || (n.contains('tiros') && n.contains('arco'));
+}
+
+bool _iniciaMercado(String n) => RegExp(r'^(ambos|doble|resultado|goles totales|mas menos corners|tiros al arco|tarjetas)').hasMatch(n);
+
+/// Monto en soles de un renglón («S/1 50.00» con espacio del OCR = 150.00).
+double? _soles(String c) {
+  final m = RegExp(r'[sS]/\.?\s*([\d\s]{1,9}(?:[.,]\s?\d{1,2})?)').firstMatch(c);
+  if (m == null) return null;
+  return _num(m.group(1)!.replaceAll(RegExp(r'\s'), ''));
 }

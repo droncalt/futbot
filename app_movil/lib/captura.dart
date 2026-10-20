@@ -3,7 +3,11 @@
 // La lectura y la opinión están en lectura.dart; aquí: OCR, guardar y la pantalla para corregir a mano.
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +23,7 @@ export 'lectura.dart';
 Future<LecturaCaptura?> leerImagen(String ruta) async {
   final rec = TextRecognizer(script: TextRecognitionScript.latin);
   try {
-    final res = await rec.processImage(InputImage.fromFilePath(ruta));
+    final res = await rec.processImage(InputImage.fromFilePath(await _ampliada(ruta)));
     final lineas = <TextLine>[for (final b in res.blocks) ...b.lines];
     if (lineas.isEmpty) return null;
     final alto = lineas.map((l) => l.boundingBox.height).reduce((a, b) => a + b) / lineas.length;
@@ -39,6 +43,23 @@ Future<LecturaCaptura?> leerImagen(String ruta) async {
     return leerTexto(renglones);
   } finally {
     rec.close();
+  }
+}
+
+/// Las capturas reenviadas por WhatsApp llegan achicadas (270–530 px de ancho) y el OCR confunde letras: se
+/// amplían a ~1080 px (interpolación cúbica) antes de leerlas.
+Future<String> _ampliada(String ruta) async {
+  try {
+    final im = img.decodeImage(await File(ruta).readAsBytes());
+    if (im == null || im.width >= 900) return ruta;
+    final escala = (1080 / im.width).clamp(1.0, 4.0);
+    final g = img.copyResize(im, width: (im.width * escala).round(), interpolation: img.Interpolation.cubic);
+    final dir = await getTemporaryDirectory();
+    final f = File('${dir.path}/ocr_${DateTime.now().millisecondsSinceEpoch}.png');
+    await f.writeAsBytes(img.encodePng(g, level: 1));
+    return f.path;
+  } catch (_) {
+    return ruta;
   }
 }
 

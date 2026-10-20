@@ -15,6 +15,7 @@ import 'comunes.dart';
 import 'datos.dart';
 import 'historial.dart';
 import 'noticias.dart';
+import 'opinion.dart';
 import 'vivo.dart';
 
 // ---------------------------------------------------------------- lo que pide el usuario
@@ -386,7 +387,8 @@ class Mensaje {
   final double monto;
   final List<(String, String)> investigar; // partidos (local, visitante) a buscar en internet después de responder
   final Pedido? pedido;
-  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10, this.investigar = const [], this.pedido});
+  final Apuesta? apuesta; // la apuesta de la que se está hablando (para «quítale…», «agrégale…»)
+  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10, this.investigar = const [], this.pedido, this.apuesta});
 }
 
 List<(String, String)> _partidosDe(Set<String> equipos) => [
@@ -395,8 +397,38 @@ List<(String, String)> _partidosDe(Set<String> equipos) => [
           ('${m['local']?['nombre']}', '${m['visitante']?['nombre']}'),
     ].take(3).toList();
 
-Future<Mensaje> responder(String texto, {Pedido? previo}) async {
+Future<Mensaje> responder(String texto, {Pedido? previo, Apuesta? apuesta}) async {
   final t = ' ${normal(texto)} ';
+  final partidosHoy = [for (final m in repo.partidos) Map<String, dynamic>.from(m)];
+  // 1) cambios sobre la apuesta de la que se viene hablando
+  if (apuesta != null && RegExp(r'\b(quita|quitale|saca|sacale|agrega|agregale|anade|anadele|cambia|cambiala|cambialo|'
+          r'reemplaza|ponle|y si|en vez|bajale|subele|sin)\b').hasMatch(t) &&
+      !RegExp(r'cuota \d|fijas|combinada de').hasMatch(t)) {
+    final nueva = modificar(apuesta, texto, corregir);
+    if (nueva != null) {
+      return Mensaje(false, opinar(nueva, cuota: cuotaMencionada(texto)), apuesta: nueva);
+    }
+  }
+  // 2) opinión sobre una apuesta escrita («¿cómo ves Barcelona gana y más de 2.5?»)
+  final pideOpinion = RegExp(r'como (la |lo |me )?ves|que (te )?parece|que opinas|que tan segur|probabilidad|se cumple|me conviene|'
+          r'la meto|la juego|analiza (esta|mi|la|esto)|cuanto le das|vale la pena|es segura|esta bien|que dices|opina')
+      .hasMatch(t);
+  final tieneMercado = RegExp(r'\b(gana|ganador|empate|ambos|mas de|menos de|over|under|corner|tarjeta|tiros?|remate|atajada|'
+          r'marca|anota|asist|goleador|\d\+)').hasMatch(t);
+  if (pideOpinion && (tieneMercado || apuesta != null)) {
+    final (a, no) = leerApuestaTexto(texto, apuesta?.partido, partidosHoy, corregir);
+    if (a != null && a.sels.isNotEmpty) {
+      return Mensaje(false, opinar(a, cuota: cuotaMencionada(texto), noEntendidas: no), apuesta: a,
+          investigar: [('${a.partido['local']?['nombre']}', '${a.partido['visitante']?['nombre']}')]);
+    }
+    if (a == null && apuesta == null) {
+      return Mensaje(false, 'Dime de qué partido es (por ejemplo «¿cómo ves Barcelona gana y más de 2.5 contra el PSG?») '
+          'o mándame la captura con 🖼️.');
+    }
+    if (pideOpinion && apuesta != null && !tieneMercado) {
+      return Mensaje(false, opinar(apuesta, cuota: cuotaMencionada(texto)), apuesta: apuesta);
+    }
+  }
   final pideAlgo = RegExp(r'\b(arma|armame|dame|agrega|agregale|anade|combina|quiero|hazme|genera|crea|pon|ponle|suma|'
           r'sumale|fija|fijas|combinada|boleta|cuota \d|mas lineas|lineas)')
       .hasMatch(t);
@@ -414,7 +446,9 @@ Future<Mensaje> responder(String texto, {Pedido? previo}) async {
     return Mensaje(false, 'Pídeme las fijas como quieras, por ejemplo:\n'
         '• «3 fijas para hoy ultra seguras»\n• «armame cuota 3 con la mayor probabilidad»\n'
         '• «cuota 2 con 80%»\n• «solo córners de la Premier»\n• «fijas del Barcelona con 20 soles»\n'
-        '• «sin jugadores, 4 partidos de mañana»\n• «analiza Real Madrid» · «¿qué es Multi Bono?» · «cómo voy»\n\n'
+        '• «sin jugadores, 4 partidos de mañana»\n• «analiza Real Madrid» · «¿qué es Multi Bono?» · «cómo voy»\n'
+        '• «¿cómo ves Barcelona gana y más de 2.5 contra el PSG? me pagan 1.90» y luego «quítale…», «agrégale ambos anotan», '
+        '«cámbiala a más de 1.5»\n\n'
         'También puedes subir una captura con 📷 y la sigo en vivo.');
   }
   if (RegExp(r'como voy|mi historial|cuanto gane|cuanto perdi|mis apuestas|mi rendimiento').hasMatch(t)) {
@@ -537,6 +571,7 @@ String _analizar(Set<String> equipos) {
     final pr = Map<String, dynamic>.from(m['prob'] ?? {});
     String x(String k) => pr[k] == null ? '—' : pct((pr[k] as num).toDouble());
     b.write('⚽ $l vs $v (${m['liga_nombre']}, ${m['inicio']})\n'
+        '${_formaTexto(m)}'
         'Local ${x('1')} · Empate ${x('X')} · Visita ${x('2')}\n'
         '1X ${x('1X')} · X2 ${x('X2')} · Más 1.5 ${x('Más 1.5')} · Más 2.5 ${x('Más 2.5')} · Menos 3.5 ${x('Menos 3.5')} · '
         'Ambos anotan ${x('Ambos anotan')}\n'
@@ -545,6 +580,22 @@ String _analizar(Set<String> equipos) {
   }
   if (b.isEmpty) return 'Ese equipo no juega en los próximos días en las ligas que analiza el bot.';
   b.write('Pídeme «fijas del ${equipos.first}» para armar una combinada con él.');
+  return b.toString();
+}
+
+String _formaTexto(Map<String, dynamic> m) {
+  final f = Map<String, dynamic>.from(m['forma'] ?? {});
+  final b = StringBuffer();
+  for (final (lado, nombre) in [('local', '${m['local']?['nombre']}'), ('visitante', '${m['visitante']?['nombre']}')]) {
+    final us = (f[lado] as List? ?? []).cast<Map>();
+    if (us.isEmpty) continue;
+    final gf = us.fold<int>(0, (a, x) => a + (x['gf'] as num).toInt()), gc = us.fold<int>(0, (a, x) => a + (x['gc'] as num).toInt());
+    b.writeln('📈 $nombre: ${us.map((x) => x['res']).join()} · $gf goles a favor y $gc en contra en ${us.length} partidos');
+  }
+  final h = (f['h2h'] as List? ?? []).cast<Map>();
+  if (h.isNotEmpty) {
+    b.writeln('🤝 Cruces: ${h.take(3).map((x) => '${x['local']} ${x['gl']}-${x['gv']} ${x['visitante']}').join(' · ')}');
+  }
   return b.toString();
 }
 
@@ -560,9 +611,17 @@ String _extras(Map<String, dynamic> m) {
     b.writeln('Córners esperados ${e['corners']} (${e['corners_local']}-${e['corners_visitante']}) · Más 7.5 ${p('corners|mas|7.5')} · '
         'Más 8.5 ${p('corners|mas|8.5')}');
   }
-  for (final j in (m['jugadores'] as List? ?? []).take(3)) {
-    b.writeln('👟 ${j['nombre']}: tiro al arco 1+ ${j['p1'] == null ? '—' : pct((j['p1'] as num).toDouble())}'
-        '${j['p2'] != null ? ' · 2+ ${pct((j['p2'] as num).toDouble())}' : ''} (si es titular)');
+  for (final j in (m['jugadores'] as List? ?? []).take(4)) {
+    final av = ((j['avisos'] as List?) ?? []).where((a) => !'$a'.startsWith('Rival sin datos')).toList();
+    b.writeln('👟 ${j['nombre']}: al arco 1+ ${j['p1'] == null ? '—' : pct((j['p1'] as num).toDouble())}'
+        '${j['p2'] != null ? ' · 2+ ${pct((j['p2'] as num).toDouble())}' : ''}'
+        '${j['goles'] != null ? ' · marca ${pct((j['goles'] as num).toDouble())}' : ''}'
+        '${j['ga'] != null ? ' · gol o asist. ${pct((j['ga'] as num).toDouble())}' : ''}'
+        ' · titular ${pct(((j['titular'] ?? 0) as num).toDouble())}${av.isNotEmpty ? ' ⚠️ ${av.first}' : ''}');
+  }
+  if ((m['esperados'] as Map?)?['atajadas'] != null) {
+    final e = m['esperados'] as Map;
+    b.writeln('🧤 Atajadas esperadas: ${e['atajadas_local']} del portero local y ${e['atajadas_visitante']} del visitante');
   }
   if (e['tarjetas'] != null) b.writeln('Tarjetas esperadas ${e['tarjetas']} · Más 2.5 ${p('tarjetas|mas|2.5')} · Más 3.5 ${p('tarjetas|mas|3.5')}');
   if (e['tiros_arco'] != null) {
@@ -606,8 +665,9 @@ class _PantallaChatState extends State<PantallaChat> {
   final ctrl = TextEditingController();
   final scroll = ScrollController();
   Pedido? ultimo;
+  Apuesta? apuestaActual;
 
-  static const sugerencias = ['3 fijas para hoy', 'cuota 2 con 80%', 'ultra segura de mañana', 'cuota 5 equilibrada',
+  static const sugerencias = ['¿cómo ves Barcelona gana y más de 1.5?', '3 fijas para hoy', 'cuota 2 con 80%', 'cuota 7 muy seguras',
     'solo goles, 4 partidos', '¿el bot acierta?', 'cómo voy'];
 
   @override
@@ -620,8 +680,12 @@ class _PantallaChatState extends State<PantallaChat> {
     if (texto.trim().isEmpty) return;
     ctrl.clear();
     setState(() => mensajes.add(Mensaje(true, texto)));
-    final r = await responder(texto, previo: ultimo);
-    if (r.pedido != null) ultimo = r.pedido;
+    final r = await responder(texto, previo: ultimo, apuesta: apuestaActual);
+    if (r.pedido != null) {
+      ultimo = r.pedido;
+      apuestaActual = null; // ahora se habla de la combinada pedida
+    }
+    if (r.apuesta != null) apuestaActual = r.apuesta;
     setState(() => mensajes.add(r));
     await _investigar(r.investigar);
     await Future.delayed(const Duration(milliseconds: 50));

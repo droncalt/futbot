@@ -59,7 +59,7 @@ List<Seleccion> seleccionesPartido(Map<String, dynamic> m, double Function(Strin
   add('1t_goles', 'menos', 2.5, 'Menos de 2.5', 'Más/Menos Goles en Primer Tiempo', '1t_goles|menos');
   // conteos: córners, tarjetas, tiros al arco y atajadas (del partido y de cada equipo)
   const conteos = {
-    'corners': ('Más/Menos Córners', [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5], [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]),
+    'corners': ('Más/Menos Córners', [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5], [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5]),
     'tarjetas': ('Más/Menos Tarjetas', [1.5, 2.5, 3.5, 4.5, 5.5, 6.5], [0.5, 1.5, 2.5]),
     'tiros_arco': ('Tiros al Arco', [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5], [1.5, 2.5, 3.5, 4.5, 5.5]),
     'atajadas': ('Atajadas del portero', [3.5, 4.5, 5.5, 6.5, 7.5], [0.5, 1.5, 2.5, 3.5, 4.5]),

@@ -530,7 +530,8 @@ def eventos_partido(liga: str, local: str, visitante: str, n: int = 6) -> list[d
         for f in r[lado]:
             fila = {"jugador_id": f["jugador_id"], "nombre": f["jugador"], "lado": lado,
                     "p1": f["prob"].get("1+"), "p2": f["prob"].get("2+"), "p3": f["prob"].get("3+"),
-                    "titular": f.get("titular_en_ultimas_10")}
+                    "titular": f.get("titular_en_ultimas_10"), "ultima": f.get("ultima_aparicion"),
+                    "arco90": f.get("tiros_al_arco_por_90"), "avisos": (f.get("avisos") or [])[:2]}
             for c, m in otros.items():
                 pr = m.predecir(f["jugador_id"], liga, rival, es_local) if m else None
                 if pr:

@@ -75,7 +75,8 @@ def _partidos(escudos: set) -> list[dict]:
                     "local": _equipo(f.local, escudos), "visitante": _equipo(f.visitante, escudos),
                     "goles_esperados": None if pd.isna(f.goles_esperados) else float(f.goles_esperados),
                     "prob": {c: (None if pd.isna(f[c]) else round(float(f[c]), 4)) for c in cols},
-                    "betano": EQ.enlace_liga(f.liga)} | _detalle(f.liga, f.local, f.visitante, w, hist))
+                    "betano": EQ.enlace_liga(f.liga), "forma": _forma(f.local, f.visitante, hist)}
+                   | _detalle(f.liga, f.local, f.visitante, w, hist))
     return out
 
 
@@ -255,3 +256,28 @@ def _calidad_extra() -> dict:
     except Exception:
         pass
     return out
+
+
+def _forma(local: str, visitante: str, hist: pd.DataFrame, n: int = 5) -> dict:
+    """Últimos partidos de cada equipo (cualquier competición con datos) y enfrentamientos directos."""
+    h = hist.dropna(subset=["gl", "gv"])
+
+    def ultimos(eq: str) -> list[dict]:
+        d = h[(h["local"] == eq) | (h["visitante"] == eq)].tail(n)
+        out = []
+        for f in d.itertuples():
+            casa = f.local == eq
+            gf, gc = (f.gl, f.gv) if casa else (f.gv, f.gl)
+            fila = {"fecha": f"{f.fecha:%d/%m}", "rival": EQ.nombre(f.visitante if casa else f.local), "casa": bool(casa),
+                    "gf": int(gf), "gc": int(gc), "res": "G" if gf > gc else "E" if gf == gc else "P"}
+            for k, (cl, cv) in (("corners", ("corn_l", "corn_v")), ("tarjetas", ("ama_l", "ama_v")), ("arco", ("arco_l", "arco_v"))):
+                a, b = getattr(f, cl, None), getattr(f, cv, None)
+                if a is not None and b is not None and not (pd.isna(a) or pd.isna(b)):
+                    fila[k] = [int(a if casa else b), int(b if casa else a)]
+            out.append(fila)
+        return out[::-1]  # el más reciente primero
+
+    d = h[((h["local"] == local) & (h["visitante"] == visitante)) | ((h["local"] == visitante) & (h["visitante"] == local))].tail(5)
+    h2h = [{"fecha": f"{f.fecha:%d/%m/%Y}", "local": EQ.nombre(f.local), "visitante": EQ.nombre(f.visitante),
+            "gl": int(f.gl), "gv": int(f.gv)} for f in d.itertuples()][::-1]
+    return {"local": ultimos(local), "visitante": ultimos(visitante), "h2h": h2h}
