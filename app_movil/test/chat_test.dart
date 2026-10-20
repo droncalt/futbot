@@ -78,4 +78,26 @@ void main() {
     expect(LimitesBetano.revisar(selecciones: 5, monto: 10, patasPorPartido: [3, 2]), isEmpty);
     expect(LimitesBetano.revisar(selecciones: 1, patasPorPartido: [14]), isNotEmpty);
   });
+
+  test('tu pedido: cuota 7 solo con Barcelona y Manchester City, y luego «agrégale líneas»', () async {
+    final q = entender('ármame una combinada de cuota 7 para arriba solo de los partidos del Barcelona y Manchester City, que sean seguras para cobrar');
+    expect(q.equipos.any((e) => e.contains('United')), isFalse, reason: 'City no es United: ${q.equipos}');
+    final m = await responder('ármame una combinada de cuota 7 para arriba solo de los partidos del Barcelona y Manchester City, que sean seguras para cobrar');
+    // ignore: avoid_print
+    print(m.texto);
+    for (final o in m.boleta ?? <Opcion>[]) {
+      // ignore: avoid_print
+      print('  ${o.partido} → ${o.cuota} (${(o.p * 100).round()}%): ${o.patas.map((x) => '${x.titulo} [${x.mercado}] ${(x.p * 100).round()}%').join(' + ')}');
+    }
+    final m2 = await responder('agrégale atrás líneas para esos partidos y así se pueda llegar, ya sea tiros al arco, goles, ambos anotan, '
+        'qué jugador hace gol o da asistencia, atajadas, etc', previo: m.pedido);
+    expect(m2.texto, isNot(contains('liquida Betano')));
+    // ignore: avoid_print
+    print('--- continuación: ${m2.texto}');
+    if (m.boleta != null) {
+      final c = m.boleta!.fold<double>(1, (a, o) => a * o.cuota);
+      expect(c, greaterThanOrEqualTo(6.9));
+      expect(m.boleta!.length, lessThanOrEqualTo(2));
+    }
+  });
 }

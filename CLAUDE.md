@@ -64,6 +64,14 @@ No es un generador de apuestas "seguras": mide probabilidades y su calibración.
   al arco). App: `lectura.dart` (3 formatos reales de Betano), `compartir.dart` (boleta como imagen, share_plus),
   `noticias.dart` (Google Noticias RSS: pronósticos y bajas), prueba de OCR por adb: imágenes en
   `/sdcard/Android/data/pe.futbot.futbot/files/prueba_ocr/` → al abrir la app escribe `<imagen>.txt`.
+- `motor/estimaciones.py` córners/tarjetas/tiros al arco/atajadas por promedios (últimos 10, a favor y en contra, NB) con
+  backtest walk-forward (`resumen_estimaciones.json`: ECE 0.6–1.9 % en ene–jun 2026). Se usan en copas y para tiros/atajadas.
+- Jugadores: `modelo_jugadores.Preparado(columna=…)` + `eventos_partido` (tiros 1+/2+/3+, gol, asistencia, gol o asistencia);
+  backtest `bot.py backtest-eventos` → `resumen_jugadores_{goles,asistencias,ga}.json` (calibrados; ni los mejores pasan
+  ~60 % de marcar). Apariciones v3 incluyen `asistencias`. Copas: equipos ESPN→football-data estricto (`espn.ALIAS_COPAS`).
+- App: `armador.dart` (catálogo de selecciones por partido, conjunta exacta de goles en grilla de marcadores, Bet Builders
+  de hasta 10 patas, frente de Pareto); chat con continuación («agrégale…»), escalones de seguridad POR PATA;
+  `aprendizaje.dart`; capturas resueltas («Ganada/Perdida») se guardan solas en el historial.
 
 ## Reglas del proyecto
 

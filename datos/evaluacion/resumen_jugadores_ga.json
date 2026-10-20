@@ -1,0 +1,230 @@
+{
+ "fecha": "2026-10-19",
+ "columna": "ga",
+ "evento": "Marca o asiste",
+ "fuente": "understat",
+ "periodo_ajuste": "2025-08-01 a 2025-12-31",
+ "periodo_validacion": "2026-01-01 a 2026-06-30",
+ "filas": {
+  "ajuste": 22710,
+  "validacion": 27258,
+  "actual": 9723
+ },
+ "parametros": {
+  "kappa": 12.0,
+  "xi": 0.002,
+  "beta": 0.5,
+  "suplente": true,
+  "poisson": false
+ },
+ "recalibracion": {
+  "usar": false,
+  "coeficientes": {
+   "suplente|1": [
+    0.0,
+    1.0
+   ],
+   "titular|1": [
+    -0.23392136742672703,
+    0.8958542116893498
+   ],
+   "sin_confirmar|1": [
+    -0.27422294027288885,
+    0.8605552266196432
+   ]
+  },
+  "logloss_validacion_cruda": 0.39635197586116233,
+  "logloss_validacion_recalibrada": 0.39664501416660813,
+  "error_calibracion_validacion_cruda": 0.005682465541530391,
+  "error_calibracion_validacion_recalibrada": 0.008551867051364608
+ },
+ "por_evento": [
+  {
+   "evento": "Marca o asiste (Titular)",
+   "periodo": "ajuste",
+   "n": 15791,
+   "prob_media": 0.17123916647435614,
+   "frecuencia_real": 0.1599645367614464,
+   "logloss": 0.4066144048203554,
+   "brier": 0.12500690341241733,
+   "error_calibracion": 0.01437390675070781,
+   "mayor_desvio": 0.06017358109904081
+  },
+  {
+   "evento": "Marca o asiste (Titular)",
+   "periodo": "validacion",
+   "n": 18974,
+   "prob_media": 0.16911721512700023,
+   "frecuencia_real": 0.16712343206493097,
+   "logloss": 0.4141729339180712,
+   "brier": 0.1282215617728212,
+   "error_calibracion": 0.00558407928384672,
+   "mayor_desvio": 0.015750908023781263
+  },
+  {
+   "evento": "Marca o asiste (Titular)",
+   "periodo": "actual",
+   "n": 6715,
+   "prob_media": 0.1739295747566605,
+   "frecuencia_real": 0.17944899478778853,
+   "logloss": 0.42913305460475215,
+   "brier": 0.13420332633260526,
+   "error_calibracion": 0.006576060070999499,
+   "mayor_desvio": 0.0130464737712159
+  },
+  {
+   "evento": "Marca o asiste (Juega (titular o suplente))",
+   "periodo": "ajuste",
+   "n": 22710,
+   "prob_media": 0.13976696057233653,
+   "frecuencia_real": 0.13474240422721268,
+   "logloss": 0.37014019898989814,
+   "brier": 0.11008224896546927,
+   "error_calibracion": 0.012065913189999769,
+   "mayor_desvio": 0.061382024056268636
+  },
+  {
+   "evento": "Marca o asiste (Juega (titular o suplente))",
+   "periodo": "validacion",
+   "n": 27258,
+   "prob_media": 0.13880668747659683,
+   "frecuencia_real": 0.14212341330985398,
+   "logloss": 0.3785310178042534,
+   "brier": 0.11376794765937531,
+   "error_calibracion": 0.005780851799214061,
+   "mayor_desvio": 0.025587148567040807
+  },
+  {
+   "evento": "Marca o asiste (Juega (titular o suplente))",
+   "periodo": "actual",
+   "n": 9723,
+   "prob_media": 0.14212980226326322,
+   "frecuencia_real": 0.15170214954232233,
+   "logloss": 0.39709421786116855,
+   "brier": 0.12045969138152558,
+   "error_calibracion": 0.009727576414681988,
+   "mayor_desvio": 0.015521356618613757
+  }
+ ],
+ "calibracion_validacion": {
+  "titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 6710,
+    "prob_estimada": 0.06782733667197731,
+    "frecuencia_real": 0.07153502235469449
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 5909,
+    "prob_estimada": 0.14186884892417567,
+    "frecuencia_real": 0.14097139955999324
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 3537,
+    "prob_estimada": 0.2493064790534407,
+    "frecuencia_real": 0.2408821034775233
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 2160,
+    "prob_estimada": 0.3407509080237813,
+    "frecuencia_real": 0.325
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 554,
+    "prob_estimada": 0.43279634303134273,
+    "frecuencia_real": 0.427797833935018
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 82,
+    "prob_estimada": 0.5337409100881437,
+    "frecuencia_real": 0.6219512195121951
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 22,
+    "prob_estimada": 0.6386670930819078,
+    "frecuencia_real": 0.7272727272727273
+   }
+  ],
+  "sin_confirmar": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 12160,
+    "prob_estimada": 0.06281510384065576,
+    "frecuencia_real": 0.0694078947368421
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 8935,
+    "prob_estimada": 0.14344877752933544,
+    "frecuencia_real": 0.14717403469501958
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 4166,
+    "prob_estimada": 0.24445069621330948,
+    "frecuencia_real": 0.24027844455112818
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 1634,
+    "prob_estimada": 0.33916889373646225,
+    "frecuencia_real": 0.3292533659730722
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 300,
+    "prob_estimada": 0.4344128514329592,
+    "frecuencia_real": 0.46
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 51,
+    "prob_estimada": 0.5421266707719541,
+    "frecuencia_real": 0.5686274509803921
+   },
+   {
+    "lo": 0.6,
+    "hi": 0.7,
+    "n": 12,
+    "prob_estimada": 0.6241924067338308,
+    "frecuencia_real": 0.75
+   }
+  ]
+ },
+ "calibrado": {
+  "titular": {
+   "ece": 0.00558407928384672,
+   "mayor_desvio": 0.015750908023781263,
+   "calibrado": true
+  },
+  "sin_confirmar": {
+   "ece": 0.005780851799214061,
+   "mayor_desvio": 0.025587148567040807,
+   "calibrado": true
+  }
+ },
+ "criterio": {
+  "ece_max": 0.02,
+  "desvio_max": 0.05,
+  "n_min_bin": 200
+ }
+}

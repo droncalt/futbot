@@ -53,25 +53,55 @@ Future<LecturaCaptura?> elegirYLeer(ImageSource origen) async {
 /// Guarda la combinada leída en el historial para seguirla en vivo y liquidarla sola.
 Future<bool> guardarLectura(LecturaCaptura r, {double? monto, String autor = 'yo', double? cuotaManual}) async {
   final a = analizar(r);
+  final resuelta = r.estado == 'ganada' || r.estado == 'perdida';
   final ls = <Map<String, dynamic>>[];
   for (final o in a.tarjetas) {
     final pc = o.pc;
+    // apuesta ya resuelta: si ganó, todas las patas se cumplieron; si perdió, las de goles se miran con el marcador
+    final fin = _marcador(pc.marcador);
     ls.add({
-      'liga': pc.liga, 'inicio': (pc.inicio ?? DateTime.now()).toIso8601String(), 'local': pc.local, 'visitante': pc.visitante,
-      'cuota': pc.cuota ?? 1.0, if (o.p != null) 'p': o.p,
+      'liga': pc.liga, 'inicio': (pc.inicio ?? r.fechaApuesta ?? DateTime.now()).toIso8601String(), 'local': pc.local,
+      'visitante': pc.visitante, 'cuota': pc.cuota ?? 1.0, if (o.p != null) 'p': o.p, if (pc.marcador != null) 'marcador': pc.marcador,
       'patas': [
         for (final x in o.patas)
           {'titulo': x.$1.titulo, 'mercado': mercadosCaptura[x.$1.mercado] ?? x.$1.textoMercado, 'sel': x.$1.sel,
-            'cuota': o.patas.length == 1 ? pc.cuota : null, if (x.$2 != null) 'p': x.$2},
+            'cuota': o.patas.length == 1 ? pc.cuota : null, if (x.$2 != null) 'p': x.$2,
+            if (resuelta) ...() {
+              final res = r.estado == 'ganada' ? 'ganada' : (fin == null ? null : _resultadoGoles(x.$1.sel, fin.$1, fin.$2));
+              return res == null ? <String, dynamic>{} : {'resultado': res, 'fuente_resultado': 'captura_resuelta'};
+            }()},
       ],
     });
   }
   final m = monto ?? r.monto ?? 0;
+  final cuota = cuotaManual ?? a.cuota ?? 1.0;
   return Historial.guardar({
-    'id': DateTime.now().millisecondsSinceEpoch, 'fecha': DateTime.now().toIso8601String(),
-    'tipo': m > 0 ? 'apostada' : 'seguimiento', 'origen': 'captura', 'autor': autor, 'monto': m,
-    'cuota': cuotaManual ?? a.cuota ?? 1.0, if (a.pTotal != null) 'p': a.pTotal, 'estado': 'pendiente', 'lineas': ls,
+    'id': DateTime.now().millisecondsSinceEpoch, 'fecha': (r.fechaApuesta ?? DateTime.now()).toIso8601String(),
+    'tipo': m > 0 ? 'apostada' : 'seguimiento', 'origen': 'captura', 'autor': autor, 'monto': r.gratis ? 0 : m,
+    'cuota': cuota, if (a.pTotal != null) 'p': a.pTotal, 'estado': resuelta ? r.estado : 'pendiente',
+    if (resuelta) 'cerrada': DateTime.now().toIso8601String(),
+    if (resuelta) 'retorno': r.estado == 'ganada' ? (r.ganancia ?? m * cuota) : 0.0,
+    if (r.gratis) 'apuesta_gratis': true,
+    'lineas': ls,
   });
+}
+
+(int, int)? _marcador(String? m) {
+  final x = RegExp(r'(\d+)\s*[-:]\s*(\d+)').firstMatch(m ?? '');
+  return x == null ? null : (int.parse(x.group(1)!), int.parse(x.group(2)!));
+}
+
+/// Resultado de una pata de goles con el marcador final (null si no se puede saber solo con el marcador).
+String? _resultadoGoles(Map<String, dynamic> sel, int h, int a) {
+  final e = Estado()
+    ..estado = 'post'
+    ..gl = h
+    ..gv = a
+    ..periodo = 2;
+  const deGoles = {'1x2', 'doble', 'goles', 'goles_local', 'goles_visitante', 'btts'};
+  if (!deGoles.contains(sel['mercado'])) return null;
+  final av = evaluar(sel, 0.5, e);
+  return av.estado == 'ganada' || av.estado == 'perdida' ? av.estado : null;
 }
 
 // ---------------------------------------------------------------- líneas que ofrece Betano (aprendidas)

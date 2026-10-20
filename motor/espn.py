@@ -103,14 +103,53 @@ def _equipos_liga(partidos: pd.DataFrame, liga: str) -> list[str]:
     return sorted(set(h["local"]) | set(h["visitante"]))
 
 
-def _mapear(nombre: str, candidatos: list[str]) -> str:
-    """Nombre de ESPN → nombre del modelo (football-data) si se reconoce con confianza."""
+# Copas: nombre de ESPN → football-data cuando no coinciden ni completos (verificados el 20/10/2026)
+ALIAS_COPAS = {
+    "internazionale": "Inter", "paris saint germain": "Paris SG", "atletico madrid": "Ath Madrid",
+    "sporting cp": "Sp Lisbon", "braga": "Sp Braga", "sporting braga": "Sp Braga", "heart of midlothian": "Hearts",
+    "real betis": "Betis", "aek athens": "AEK", "panathinaikos": "Panathinaikos", "athletic club": "Ath Bilbao", "borussia dortmund": "Dortmund", "vfb stuttgart": "Stuttgart",
+    "bayer leverkusen": "Leverkusen", "eintracht frankfurt": "Ein Frankfurt", "borussia monchengladbach": "M'gladbach",
+    "ajax amsterdam": "Ajax", "feyenoord rotterdam": "Feyenoord", "psv eindhoven": "PSV Eindhoven", "kaa gent": "Gent",
+    "fc twente": "Twente", "az alkmaar": "AZ Alkmaar", "olympique lyonnais": "Lyon", "olympique marseille": "Marseille",
+    "ogc nice": "Nice", "rangers": "Rangers", "celtic": "Celtic", "paok salonika": "PAOK", "olympiacos": "Olympiakos",
+}
+# palabras de relleno que ESPN agrega y football-data no («AS Monaco» = «Monaco»)
+_RELLENO_COPAS = {"vfb", "vfl", "tsg", "kaa", "krc", "rsc", "sv", "fsv", "kv", "ogc", "sl", "aek_"}
+
+
+def _estricto(t: str) -> str:
+    return " ".join(w for w in _normal(t).split() if w not in _RELLENO_COPAS)
+
+
+def _mapear(nombre: str, candidatos: list[str], umbral: float = 0.6, estricto: bool = False) -> str:
+    """Nombre de ESPN → nombre del modelo (football-data) si se reconoce con confianza. Compara también con el
+    nombre completo («Man City» → «Manchester City»). En copas (estricto) solo vale el nombre igual o un alias
+    conocido: hay homónimos de ligas chicas (Inter d'Escaldes ≠ Inter, Red Star Belgrade ≠ Red Star FC)."""
+    from . import equipos as EQ
+    if estricto:
+        n = _estricto(nombre)
+        alias = ALIAS_COPAS.get(n)
+        if alias in candidatos:
+            return alias
+        for c in candidatos:
+            if n and (n == _estricto(c) or n == _estricto(EQ.nombre(c))):
+                return c
+        return nombre
     mejor, puntos = nombre, 0.0
     for c in candidatos:
-        s = _parecido(nombre, c)
+        s = max(_parecido(nombre, c), _parecido(nombre, EQ.nombre(c)))
         if s > puntos:
             mejor, puntos = c, s
-    return mejor if puntos >= 0.6 else nombre
+    return mejor if puntos >= umbral else nombre
+
+
+def _equipos_europa(partidos: pd.DataFrame) -> list[str]:
+    """Equipos de las ligas europeas con datos (para reconocerlos en Champions, Europa y Conference)."""
+    h = partidos[partidos["liga"].isin(list(C.LIGAS_EUROPA))]
+    if h.empty:
+        return []
+    h = h[h["fecha"] >= h["fecha"].max() - pd.Timedelta(days=400)]
+    return sorted(set(h["local"]) | set(h["visitante"]))
 
 
 def descargar(dias: int = 3) -> pd.DataFrame:
@@ -121,8 +160,10 @@ def descargar(dias: int = 3) -> pd.DataFrame:
     except Exception:
         partidos = pd.DataFrame(columns=["liga", "fecha", "local", "visitante"])
     filas, vistos = [], set()
+    europa = _equipos_europa(partidos)
     for liga, slug in SLUGS.items():
-        cand = _equipos_liga(partidos, liga) if liga in C.LIGAS else []
+        cand = _equipos_liga(partidos, liga) if liga in C.LIGAS else europa if liga in ("UCL", "UEL", "UECL") else []
+        umbral = 0.6 if liga in C.LIGAS else 0.75
         for d in range(dias + 1):
             fecha = (hoy + dt.timedelta(days=d)).strftime("%Y%m%d")
             try:
@@ -161,7 +202,8 @@ def descargar(dias: int = 3) -> pd.DataFrame:
                 inicio = pd.Timestamp(c.get("date") or e["date"]).tz_convert(C.ZONA_HORARIA).tz_localize(None)
                 h, a = eq["home"]["team"], eq["away"]["team"]
                 filas.append({
-                    "liga": liga, "local": _mapear(h["displayName"], cand), "visitante": _mapear(a["displayName"], cand),
+                    "liga": liga, "local": _mapear(h["displayName"], cand, umbral, liga not in C.LIGAS),
+                    "visitante": _mapear(a["displayName"], cand, umbral, liga not in C.LIGAS),
                     "inicio": inicio, "c_1": c1, "c_x": cx, "c_2": c2,
                     "c_o25": o25[0] if o25 else np.nan, "c_u25": o25[1] if o25 else np.nan,
                     "espn_id": e["id"], "escudo_l": h.get("logo"), "escudo_v": a.get("logo"),

@@ -64,8 +64,8 @@ double parecido(String a, String b) {
 class Jugador {
   final String nombre;
   final bool titular;
-  final int tirosArco, tiros, goles, amarillas, rojas;
-  Jugador(this.nombre, this.titular, this.tirosArco, this.tiros, this.goles, this.amarillas, this.rojas);
+  final int tirosArco, tiros, goles, amarillas, rojas, asistencias;
+  Jugador(this.nombre, this.titular, this.tirosArco, this.tiros, this.goles, this.amarillas, this.rojas, [this.asistencias = 0]);
 }
 
 class Estado {
@@ -180,7 +180,7 @@ class Espn {
           final s = {for (final x in (p['stats'] as List? ?? [])) '${x['name']}': (x['value'] as num?)?.toInt() ?? 0};
           if ((s['appearances'] ?? 0) == 0 && p['starter'] != true && (s['subIns'] ?? 0) == 0) continue;
           e.jugadores.add(Jugador('${p['athlete']?['displayName'] ?? ''}', p['starter'] == true, s['shotsOnTarget'] ?? 0,
-              s['totalShots'] ?? 0, s['totalGoals'] ?? 0, s['yellowCards'] ?? 0, s['redCards'] ?? 0));
+              s['totalShots'] ?? 0, s['totalGoals'] ?? 0, s['yellowCards'] ?? 0, s['redCards'] ?? 0, s['goalAssists'] ?? 0));
         }
       }
       for (final k in (j['keyEvents'] as List? ?? [])) {
@@ -292,7 +292,19 @@ Avance evaluar(Map<String, dynamic> sel, double pPre, Estado? e, {String? nombre
     case 'tarjetas':
       valor = e.tarjetasPts;
       que = 'Tarjetas (amarilla 1, roja 2)';
+    case 'atajadas':
+      valor = e.stat(true, 'saves') + e.stat(false, 'saves');
+      que = 'Atajadas de ambos porteros';
+    case 'atajadas_local':
+      valor = e.stat(true, 'saves');
+      que = 'Atajadas del portero de ${e.nl}';
+    case 'atajadas_visitante':
+      valor = e.stat(false, 'saves');
+      que = 'Atajadas del portero de ${e.nv}';
     case 'jug_arco':
+    case 'jug_gol':
+    case 'jug_asist':
+    case 'jug_ga':
       final nom = nombreJugador ?? '${sel['jugador_nombre'] ?? ''}';
       Jugador? j;
       var best = 0.55;
@@ -307,11 +319,12 @@ Avance evaluar(Map<String, dynamic> sel, double pPre, Estado? e, {String? nombre
         return Avance(e.estado == 'pre' ? '$nom: alineación aún no publicada' : '$nom: no aparece en la alineación',
             e.estado == 'pre' ? 'por empezar' : 'sin datos');
       }
-      valor = j.tirosArco;
-      que = '${j.nombre}${j.titular ? '' : ' (suplente)'} · tiros al arco';
+      valor = m == 'jug_gol' ? j.goles : m == 'jug_asist' ? j.asistencias : m == 'jug_ga' ? j.goles + j.asistencias : j.tirosArco;
+      que = '${j.nombre}${j.titular ? '' : ' (suplente)'} · '
+          '${m == 'jug_gol' ? 'goles' : m == 'jug_asist' ? 'asistencias' : m == 'jug_ga' ? 'goles + asistencias' : 'tiros al arco'}';
   }
   if (valor != null) {
-    final mas = m == 'jug_arco' || o == 'mas';
+    final mas = m.startsWith('jug_') || o == 'mas';
     final k = mas ? linea.floor() + 1 : linea.floor();
     final objetivo = mas ? 'necesita ${linea.floor() + 1}+' : 'máximo ${linea.floor()}';
     final txt = '$que: $valor ($objetivo)';
@@ -644,7 +657,8 @@ class DetallePartido extends StatelessWidget {
     bool resaltar(String k) =>
         (k == 'wonCorners' && marcadas.any((m) => m.startsWith('corners'))) ||
         ((k == 'yellowCards' || k == 'redCards') && marcadas.contains('tarjetas')) ||
-        (k == 'shotsOnTarget' && marcadas.any((m) => m == 'jug_arco' || m.startsWith('tiros_arco')));
+        (k == 'shotsOnTarget' && marcadas.any((m) => m == 'jug_arco' || m.startsWith('tiros_arco'))) ||
+        (k == 'saves' && marcadas.any((m) => m.startsWith('atajadas')));
     final jugMarcados = [for (final p in (linea['patas'] as List)) if (p['sel']?['jugador_nombre'] != null) '${p['sel']['jugador_nombre']}'];
     final tiradores = [...e.jugadores.where((j) => j.tiros > 0 || jugMarcados.any((n) => parecido(n, j.nombre) > 0.55))]
       ..sort((a, b) => b.tirosArco.compareTo(a.tirosArco) != 0 ? b.tirosArco.compareTo(a.tirosArco) : b.tiros.compareTo(a.tiros));

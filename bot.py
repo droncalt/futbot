@@ -35,6 +35,11 @@ def _imprimir(obj) -> None:
     print(json.dumps(obj, ensure_ascii=False, indent=1, default=str))
 
 
+def cmd_backtest_eventos(a):
+    from motor import evaluacion_jugadores as EJ
+    _imprimir(EJ.backtest_eventos(progreso=lambda p, m: print(f"{p:4.0%} {m}", file=sys.stderr)))
+
+
 def cmd_celular(a):
     from motor import celular
     _imprimir(celular.importar())
@@ -198,6 +203,8 @@ def main():
     s = sub.add_parser("equipos"); s.add_argument("--liga", required=True); s.set_defaults(f=cmd_equipos)
     s = sub.add_parser("proximos"); s.add_argument("--liga"); s.set_defaults(f=cmd_proximos)
     s = sub.add_parser("celular", help="Importa lo aprendido en el celular (capturas y patas)"); s.set_defaults(f=cmd_celular)
+    s = sub.add_parser("backtest-eventos", help="Backtest de gol / asistencia / gol o asistencia por jugador")
+    s.set_defaults(f=cmd_backtest_eventos)
     s = sub.add_parser("exportar"); s.add_argument("--sin-jugadores", action="store_true"); s.set_defaults(f=cmd_exportar)
     s = sub.add_parser("analizar")
     s.add_argument("--liga", required=True, help="Código de liga (E0, SP1…) u OTRA")

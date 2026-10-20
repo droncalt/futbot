@@ -82,7 +82,7 @@ def _partidos(escudos: set) -> list[dict]:
 # Líneas que la app puede evaluar de una captura (clave "mercado|opcion|linea", como Seleccion)
 _GRILLA = ([("1x2", o, None) for o in ("local", "empate", "visitante")] + [("doble", o, None) for o in ("1X", "X2", "12")]
            + [("btts", o, None) for o in ("si", "no")]
-           + [(m, o, l) for m, ls in (("goles", M.LINEAS_GOLES), ("goles_local", [0.5, 1.5, 2.5]),
+           + [(m, o, l) for m, ls in (("goles", M.LINEAS_GOLES + [6.5]), ("goles_local", [0.5, 1.5, 2.5]),
                                       ("goles_visitante", [0.5, 1.5, 2.5]), ("1t_goles", [0.5, 1.5, 2.5]),
                                       ("2t_goles", [0.5, 1.5, 2.5]),
                                       ("corners", [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]),
@@ -138,38 +138,38 @@ def _detalle(liga, local, visitante, w, hist) -> dict:
             el, ev = float((Mx.sum(1) * k).sum()), float((Mx.sum(0) * np.arange(Mx.shape[1])).sum())
             esp[nombre] = round(el + ev, 2)
             esp[f"{nombre}_local"], esp[f"{nombre}_visitante"] = round(el, 2), round(ev, 2)
-    # tiros al arco: promedio simple de lo que cada uno genera y concede (no hay modelo con backtest: estimación)
-    pl, pv = _promedios(hist, local), _promedios(hist, visitante)
-    if "arco" in pl and "arco" in pv:
-        al = (pl["arco"][0] + pv["arco"][1]) / 2
-        av = (pv["arco"][0] + pl["arco"][1]) / 2
-        esp.update(tiros_arco=round(al + av, 2), tiros_arco_local=round(al, 2), tiros_arco_visitante=round(av, 2))
-        for m, lam, lineas in (("tiros_arco", al + av, [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]),
-                               ("tiros_arco_local", al, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]),
-                               ("tiros_arco_visitante", av, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5])):
-            for l in lineas:
-                pm = float(poisson.sf(int(l), lam))
-                mer[_clave(m, "mas", l)] = round(pm, 4)
-                mer[_clave(m, "menos", l)] = round(1 - pm, 4)
-    return {"mercados": mer, "esperados": esp, "jugadores": _jugadores(liga, local, visitante)}
+    # promedios de los últimos 10 partidos de cada equipo, con backtest (motor/estimaciones.py): tiros al arco y
+    # atajadas siempre; córners y tarjetas solo si el partido no tiene modelo propio (copas)
+    estimados = []
+    try:
+        from . import estimaciones as ES
+        me, ee = ES.mercados_partido(local, visitante)
+        for k, v in me.items():
+            fam = k.split("|")[0].replace("_local", "").replace("_visitante", "")
+            if fam in ("tiros_arco", "atajadas") or k not in mer:
+                if k not in mer:
+                    estimados.append(k)
+                mer[k] = v
+        for k, v in ee.items():
+            esp.setdefault(k, v)
+    except Exception:
+        pass
+    fams = sorted({k.split("|")[0] for k in estimados})
+    return {"mercados": mer, "esperados": esp, "estimados": fams, "jugadores": _jugadores(liga, local, visitante)}
 
 
-def _jugadores(liga, local, visitante, n: int = 5) -> list[dict]:
+def _jugadores(liga, local, visitante, n: int = 8) -> list[dict]:
     """Los jugadores con más probabilidad de tiro al arco (modelo con backtest, 5 grandes ligas), si es titular."""
-    if liga not in C.LIGAS_JUGADORES:
-        return []
     try:
         from . import modelo_jugadores as MJ
-        r = MJ.jugadores_partido(liga, local, visitante, MJ.ESCENARIO_DEFECTO, n=6)
+        filas = MJ.eventos_partido(liga, local, visitante, n=6)
     except Exception:
         return []
-    if not r.get("disponible"):
-        return []
-    filas = [{"nombre": f["jugador"], "lado": lado, "equipo": EQ.nombre(local if lado == "local" else visitante),
-              "p1": f["prob"].get("1+"), "p2": f["prob"].get("2+"), "p3": f["prob"].get("3+"),
-              "titular": f.get("titular_en_ultimas_10"), "linea_min": CB.linea_min_jugador(f["jugador"], f["prob"])}
-             for lado in ("local", "visitante") for f in r[lado] if f["prob"].get("1+")]
-    return sorted(filas, key=lambda x: -x["p1"])[:n]
+    for f in filas:
+        f["equipo"] = EQ.nombre(local if f["lado"] == "local" else visitante)
+        f["linea_min"] = CB.linea_min_jugador(f["nombre"], {"1+": f.get("p1") or 0})
+        f.pop("jugador_id", None)
+    return sorted([f for f in filas if f.get("p1")], key=lambda x: -x["p1"])[:n]
 
 
 def _resultados(dias: int = 10) -> list[dict]:
@@ -212,7 +212,7 @@ def exportar(jugadores: bool = True) -> dict:
         "multibono": B.MULTI_BONO_FUTBOL, "apuesta_minima": B.APUESTA_MINIMA,
         "reglas": B.base_conocimiento()["reglas"],
         "calidad": {"fijas_global": ev.get("fijas_global"), "periodo": ev.get("periodo"), "partidos": ev.get("partidos"),
-                    "peso_modelo": ev.get("peso_modelo")},
+                    "peso_modelo": ev.get("peso_modelo"), **_calidad_extra()},
     }
     for archivo in escudos:
         origen = EQ.DIR_ESCUDOS / archivo
@@ -225,3 +225,33 @@ def exportar(jugadores: bool = True) -> dict:
     return {"lineas": {k: len(v) for k, v in paquete["lineas"].items()}, "partidos": len(paquete["partidos"]),
             "resultados": len(paquete["resultados"]), "escudos": len(escudos),
             "kb": round((DIR_PUBLICAR / "paquete.json").stat().st_size / 1024)}
+
+
+def _calidad_extra() -> dict:
+    """Resumen de los backtests de jugadores y de las estimaciones por promedios (para «Aprendizaje»)."""
+    out = {}
+    try:
+        from . import estimaciones as ES
+        r = ES.resumen()
+        ev = [x for x in r.get("evaluacion", []) if x["periodo"] == "validacion"]
+        if ev:
+            out["estimaciones"] = {"partidos": r.get("partidos"), "periodo": r.get("periodo_validacion"),
+                                   "mercados": {x["mercado"]: {"n": x["n"], "prob": round(x["prob_media"], 3),
+                                                               "real": round(x["frecuencia_real"], 3),
+                                                               "error": round(x["error_calibracion"], 4)} for x in ev}}
+    except Exception:
+        pass
+    try:
+        from . import modelo_jugadores as MJ
+        jug = {}
+        for col in ("tiros_arco", "goles", "asistencias", "ga"):
+            r = MJ.resumen_backtest() if col == "tiros_arco" else MJ.resumen_evento(col)
+            for x in r.get("por_evento", []):
+                if x["periodo"] == "validacion" and ("Titular" in x["evento"] or "titular" in x["evento"]):
+                    jug.setdefault(col, []).append({"evento": x["evento"], "n": x["n"], "prob": round(x["prob_media"], 3),
+                                                    "real": round(x["frecuencia_real"], 3), "error": round(x["error_calibracion"], 4)})
+        if jug:
+            out["jugadores"] = jug
+    except Exception:
+        pass
+    return out

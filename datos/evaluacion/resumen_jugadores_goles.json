@@ -1,0 +1,216 @@
+{
+ "fecha": "2026-10-19",
+ "columna": "goles",
+ "evento": "Marca gol",
+ "fuente": "understat",
+ "periodo_ajuste": "2025-08-01 a 2025-12-31",
+ "periodo_validacion": "2026-01-01 a 2026-06-30",
+ "filas": {
+  "ajuste": 22710,
+  "validacion": 27258,
+  "actual": 9723
+ },
+ "parametros": {
+  "kappa": 25.0,
+  "xi": 0.002,
+  "beta": 0.5,
+  "suplente": true,
+  "poisson": false
+ },
+ "recalibracion": {
+  "usar": false,
+  "coeficientes": {
+   "suplente|1": [
+    0.0,
+    1.0
+   ],
+   "titular|1": [
+    -0.19547981559917146,
+    0.9348325700027389
+   ],
+   "sin_confirmar|1": [
+    -0.2349327200388796,
+    0.9065452526968321
+   ]
+  },
+  "logloss_validacion_cruda": 0.27927511079431633,
+  "logloss_validacion_recalibrada": 0.27960127813666547,
+  "error_calibracion_validacion_cruda": 0.0032627969338030922,
+  "error_calibracion_validacion_recalibrada": 0.005542453781004408
+ },
+ "por_evento": [
+  {
+   "evento": "Marca gol (Titular)",
+   "periodo": "ajuste",
+   "n": 15791,
+   "prob_media": 0.10519425303853171,
+   "frecuencia_real": 0.09885377746817807,
+   "logloss": 0.29160821361424494,
+   "brier": 0.0827534628655075,
+   "error_calibracion": 0.00729032229547447,
+   "mayor_desvio": 0.03065888383485446
+  },
+  {
+   "evento": "Marca gol (Titular)",
+   "periodo": "validacion",
+   "n": 18974,
+   "prob_media": 0.1037165047552272,
+   "frecuencia_real": 0.10213977021186887,
+   "logloss": 0.293213367529099,
+   "brier": 0.08384878965664297,
+   "error_calibracion": 0.004067748755323009,
+   "mayor_desvio": 0.038116813377449765
+  },
+  {
+   "evento": "Marca gol (Titular)",
+   "periodo": "actual",
+   "n": 6715,
+   "prob_media": 0.1058091412975896,
+   "frecuencia_real": 0.11049888309754281,
+   "logloss": 0.3083074562781394,
+   "brier": 0.08934233802592921,
+   "error_calibracion": 0.004720668399974161,
+   "mayor_desvio": 0.003562323736283818
+  },
+  {
+   "evento": "Marca gol (Juega (titular o suplente))",
+   "periodo": "ajuste",
+   "n": 22710,
+   "prob_media": 0.08617562922431325,
+   "frecuencia_real": 0.08326728313518274,
+   "logloss": 0.2630935818041991,
+   "brier": 0.07203566820136219,
+   "error_calibracion": 0.003937518412230079,
+   "mayor_desvio": 0.046891922653899354
+  },
+  {
+   "evento": "Marca gol (Juega (titular o suplente))",
+   "periodo": "validacion",
+   "n": 27258,
+   "prob_media": 0.08543036434924416,
+   "frecuencia_real": 0.08661677305745102,
+   "logloss": 0.2653368540595337,
+   "brier": 0.0735257507942718,
+   "error_calibracion": 0.002457845112283175,
+   "mayor_desvio": 0.04147399866621104
+  },
+  {
+   "evento": "Marca gol (Juega (titular o suplente))",
+   "periodo": "actual",
+   "n": 9723,
+   "prob_media": 0.08620666594634482,
+   "frecuencia_real": 0.09390105934382392,
+   "logloss": 0.28386533976911094,
+   "brier": 0.07945772035985758,
+   "error_calibracion": 0.007694393397479096,
+   "mayor_desvio": 0.008196876285957444
+  }
+ ],
+ "calibracion_validacion": {
+  "titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 12288,
+    "prob_estimada": 0.04950845233383916,
+    "frecuencia_real": 0.04833984375
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 3492,
+    "prob_estimada": 0.14942203377419389,
+    "frecuencia_real": 0.140893470790378
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 2553,
+    "prob_estimada": 0.24156971700136398,
+    "frecuencia_real": 0.2381511946729338
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 577,
+    "prob_estimada": 0.332767068771597,
+    "frecuencia_real": 0.3708838821490468
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 50,
+    "prob_estimada": 0.43360242664813997,
+    "frecuencia_real": 0.42
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 14,
+    "prob_estimada": 0.5257963921342578,
+    "frecuencia_real": 0.6428571428571429
+   }
+  ],
+  "sin_confirmar": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 18963,
+    "prob_estimada": 0.045701442511430754,
+    "frecuencia_real": 0.0466170964509835
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 5843,
+    "prob_estimada": 0.1438179713762033,
+    "frecuencia_real": 0.14085230189970904
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 2117,
+    "prob_estimada": 0.23872866796529343,
+    "frecuencia_real": 0.2465753424657534
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 297,
+    "prob_estimada": 0.3322633750711627,
+    "frecuencia_real": 0.37373737373737376
+   },
+   {
+    "lo": 0.4,
+    "hi": 0.5,
+    "n": 31,
+    "prob_estimada": 0.45314235168118633,
+    "frecuencia_real": 0.5161290322580645
+   },
+   {
+    "lo": 0.5,
+    "hi": 0.6,
+    "n": 7,
+    "prob_estimada": 0.5111121365002224,
+    "frecuencia_real": 0.7142857142857143
+   }
+  ]
+ },
+ "calibrado": {
+  "titular": {
+   "ece": 0.004067748755323009,
+   "mayor_desvio": 0.038116813377449765,
+   "calibrado": true
+  },
+  "sin_confirmar": {
+   "ece": 0.002457845112283175,
+   "mayor_desvio": 0.04147399866621104,
+   "calibrado": true
+  }
+ },
+ "criterio": {
+  "ece_max": 0.02,
+  "desvio_max": 0.05,
+  "n_min_bin": 200
+ }
+}

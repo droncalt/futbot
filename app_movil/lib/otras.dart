@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'comunes.dart';
+import 'aprendizaje.dart';
 import 'boleta.dart' show BuscadorEquipos;
 import 'captura.dart';
 import 'datos.dart';
@@ -201,6 +202,11 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
     return ListView(padding: const EdgeInsets.all(12), children: [
       Text('Más', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
       const SizedBox(height: 8),
+      Card(color: Col.tarjeta, child: ListTile(
+        leading: const Text('🧠', style: TextStyle(fontSize: 24)), title: const Text('Aprendizaje'),
+        subtitle: const Text('Cómo aprende y qué aprendió'), trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaAprendizaje())),
+      )),
       Card(color: Col.tarjeta, child: ListTile(
         leading: const Icon(Icons.document_scanner), title: const Text('Capturas'),
         subtitle: const Text('Cargar o corregir una combinada a mano (lo fácil: mándala en el Chat)'), trailing: const Icon(Icons.chevron_right),

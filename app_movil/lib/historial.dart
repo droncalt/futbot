@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'aprendizaje.dart';
 import 'compartir.dart';
 import 'comunes.dart';
 import 'datos.dart';
@@ -97,21 +98,26 @@ class Historial {
     return out;
   }
 
-  /// Acierto real por tipo de mercado vs lo que prometía el bot (patas ya resueltas).
-  static Map<String, List<double>> porMercado(List<Map<String, dynamic>> b) {
-    final out = <String, List<double>>{}; // mercado → [aciertos, total, suma prob]
+  /// Acierto real por tipo de mercado (todas tus patas resueltas) y, donde el bot dio probabilidad, contra lo que
+  /// prometía (eso es lo que corrige las probabilidades del chat).
+  static Map<String, EstadMercado> porMercado(List<Map<String, dynamic>> b) {
+    final out = <String, EstadMercado>{};
     for (final bol in b) {
       for (final l in (bol['lineas'] as List)) {
         for (final p in (l['patas'] as List)) {
           final r = p['resultado'];
           if (r != 'ganada' && r != 'perdida') continue;
           final m = '${p['sel']?['mercado'] ?? p['mercado']}';
+          if (m == 'otro' || m.isEmpty) continue;
+          final v = out.putIfAbsent(m, () => EstadMercado());
+          v.total++;
+          if (r == 'ganada') v.aciertos++;
           final pp = pPrevia(Map<String, dynamic>.from(p), Map<String, dynamic>.from(l));
-          if (pp == null || m == 'otro') continue; // sin probabilidad del bot no hay con qué comparar
-          final v = out.putIfAbsent(m, () => [0, 0, 0]);
-          v[0] += r == 'ganada' ? 1 : 0;
-          v[1] += 1;
-          v[2] += pp;
+          if (pp != null && p['fuente_resultado'] != 'captura_resuelta') {
+            v.conP++;
+            v.sumaP += pp;
+            if (r == 'ganada') v.aciertosConP++;
+          }
         }
       }
     }
@@ -128,7 +134,9 @@ class Historial {
   static Future<bool> guardar(Map<String, dynamic> boleta) async {
     final b = await cargar();
     final f = firma(boleta);
-    if (b.any((x) => x['estado'] == 'pendiente' && firma(x) == f)) return false;
+    final dia = '${boleta['fecha'] ?? ''}'.split('T').first;
+    // misma apuesta pendiente, o la misma captura de una apuesta ya resuelta (mismo día de realización)
+    if (b.any((x) => firma(x) == f && (x['estado'] == 'pendiente' || '${x['fecha'] ?? ''}'.split('T').first == dia))) return false;
     b.insert(0, boleta);
     await _guardarTodo(b);
     return true;
@@ -270,6 +278,13 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
       onRefresh: _cargar,
       child: ListView(padding: const EdgeInsets.all(12), children: [
         Text('Mi historial', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+        Card(color: Col.tarjeta, child: ListTile(
+          leading: const Text('🧠', style: TextStyle(fontSize: 26)),
+          title: const Text('Aprendizaje', style: TextStyle(fontWeight: FontWeight.w800)),
+          subtitle: const Text('Cómo aprende el bot y qué aprendió de tus apuestas, capturas e internet'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaAprendizaje())),
+        )),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
           _dato('Apostado', 'S/${f2(apostado)}'),
@@ -310,7 +325,7 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
   List<Widget> _porMercado() {
     final m = Historial.porMercado(boletas);
     if (m.isEmpty) return [];
-    final filas = m.entries.toList()..sort((a, b) => b.value[1].compareTo(a.value[1]));
+    final filas = m.entries.toList()..sort((a, b) => b.value.total.compareTo(a.value.total));
     return [
       const Text('Aprendizaje por mercado (tus patas resueltas)', style: TextStyle(fontWeight: FontWeight.w800)),
       const Text('Real = cuántas acertaron · Bot = lo que prometía. Si «Real» queda muy por debajo con muchas patas, '
@@ -319,10 +334,10 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
         ListTile(
           dense: true,
           title: Text(e.key),
-          subtitle: Text('${e.value[0].toInt()}/${e.value[1].toInt()} acertadas'),
-          trailing: Text('Real ${pct(e.value[0] / e.value[1])} · Bot ${pct(e.value[2] / e.value[1])}',
+          subtitle: Text('${e.value.aciertos}/${e.value.total} acertadas'),
+          trailing: Text('Real ${pct(e.value.real)}${e.value.conP > 0 ? ' · Bot ${pct(e.value.prometido)}' : ''}',
               style: TextStyle(fontWeight: FontWeight.w800,
-                  color: e.value[0] / e.value[1] + 0.05 < e.value[2] / e.value[1] ? Col.rosa : const Color(0xFF34D399))),
+                  color: e.value.conP > 0 && e.value.realConP + 0.05 < e.value.prometido ? Col.rosa : const Color(0xFF34D399))),
         ),
       const SizedBox(height: 8),
     ];
@@ -387,3 +402,13 @@ Future<bool> confirmarBorrar(BuildContext context) async =>
       ),
     ) ??
     false;
+
+/// Estadística de un mercado en tus patas resueltas.
+class EstadMercado {
+  int total = 0, aciertos = 0; // todas (incluye capturas de apuestas ya resueltas)
+  int conP = 0, aciertosConP = 0; // solo las que tenían probabilidad del bot
+  double sumaP = 0;
+  double get real => total == 0 ? 0 : aciertos / total;
+  double get realConP => conP == 0 ? 0 : aciertosConP / conP;
+  double get prometido => conP == 0 ? 0 : sumaP / conP;
+}

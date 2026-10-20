@@ -47,6 +47,14 @@ REGLA_BETANO = ("En Betano, con «Anular jugadores no titulares» (activo por de
                 "su selección se anula; en un Bet Builder, una selección anulada anula todo el Bet Builder. Por eso la "
                 "probabilidad que importa es la de «Titular». Si desactivaste esa opción, usa «Juega (titular o suplente)».")
 RUTA_RESUMEN = C.DIR_EVALUACION / "resumen_jugadores.json"
+COLUMNAS = ("tiros_arco", "goles", "asistencias")
+# Otras estadísticas del jugador con el mismo modelo (Gamma-Poisson + defensa rival + minutos de titular);
+# cada una tiene su propio backtest (evaluacion_jugadores.backtest_eventos) en resumen_jugadores_<columna>.json.
+EVENTOS = {"goles": "Marca gol", "asistencias": "Da asistencia", "ga": "Marca o asiste"}
+
+
+def ruta_resumen(columna: str) -> "C.Path":
+    return RUTA_RESUMEN if columna == "tiros_arco" else C.DIR_EVALUACION / f"resumen_jugadores_{columna}.json"
 
 
 @dataclass(frozen=True)
@@ -116,7 +124,7 @@ class Preparado:
     `ap` debe traer equipo_fd y rival_fd (jugadores.con_nombres_fd).
     """
 
-    def __init__(self, ap: pd.DataFrame, fecha_ref, arco: dict):
+    def __init__(self, ap: pd.DataFrame, fecha_ref, arco: dict, columna: str = "tiros_arco"):
         self.fecha_ref = pd.Timestamp(fecha_ref)
         tr = ap[(ap["fecha"] < self.fecha_ref)
                 & (ap["fecha"] >= self.fecha_ref - pd.Timedelta(days=C.VENTANA_DIAS_JUGADORES))]
@@ -125,7 +133,11 @@ class Preparado:
         n = len(self.ids)
         self.n = n
         self.dias = (self.fecha_ref - tr["fecha"]).dt.days.to_numpy(float)
-        self.y = tr["tiros_arco"].to_numpy(float)
+        # columnas disponibles para el mismo historial (se elige una con usar())
+        self._cols = {c: tr[c].to_numpy(float) for c in COLUMNAS if c in tr.columns}
+        if "goles" in self._cols and "asistencias" in self._cols:
+            self._cols["ga"] = self._cols["goles"] + self._cols["asistencias"]
+        self.y = self._cols.get(columna, tr["tiros_arco"].to_numpy(float))
         self.mins = tr["minutos"].to_numpy(float)
         self.es_tit = tr["titular"].to_numpy(bool)
         self.defensas = {liga: _defensa(m) for liga, m in arco.items()}
@@ -165,6 +177,11 @@ class Preparado:
         nt = ult10.groupby("_c")["titular"].sum().reindex(range(n)).fillna(0).to_numpy(float)
         na = ult10.groupby("_c").size().reindex(range(n)).fillna(0).to_numpy(float)
         self.p_tit = (nt + 0.5) / (na + 1.0)   # P(titular | juega), con un leve encogimiento a 50 %
+
+    def usar(self, columna: str) -> "Preparado":
+        """Cambia la estadística que se modela (tiros_arco, goles, asistencias o ga = gol o asistencia)."""
+        self.y = self._cols[columna]
+        return self
 
     @staticmethod
     def _lista_minutos(d: pd.DataFrame, n: int, tipico: np.ndarray) -> np.ndarray:
@@ -245,11 +262,11 @@ def _norm(s) -> str:
 
 
 class ModeloJugadores:
-    def __init__(self, prep: Preparado, params: Params, fuente: str, origen_params: str = ""):
+    def __init__(self, prep: Preparado, params: Params, fuente: str, origen_params: str = "", recal: dict | None = None):
         self.prep, self.params, self.fuente, self.origen_params = prep, params, fuente, origen_params
         self.a, self.b, mu = prep.posterior(params)
         self.gamma = prep.gamma
-        self.recal = resumen_backtest().get("recalibracion", {})
+        self.recal = resumen_backtest().get("recalibracion", {}) if recal is None else recal
         t = prep.info.copy()
         t["tasa90"] = self.a / self.b
         t["prior90"] = mu
@@ -391,7 +408,7 @@ def jugadores_partido(liga: str, local: str, visitante: str, escenario: str = ES
                 "factor_defensa_rival": round(r["factor_rival"], 3), "partidos_muestra": r["partidos"],
                 "ultima_aparicion": r["ultima_fecha"], "avisos": r["avisos"]}
     for lado, eq, rival, es_local in (("local", local, visitante, True), ("visitante", visitante, local, False)):
-        plantel = mj.jugadores_de(liga, eq) if liga in C.LIGAS_JUGADORES else mj.tabla.iloc[0:0]
+        plantel = mj.jugadores_de(liga, eq)  # copas: su plantel según su liga (rival de otra liga = defensa promedio)
         if jugador:
             plantel = plantel[plantel["_nombre"].str.contains(_norm(jugador), regex=False)]
         for jid in plantel["jugador_id"].head(n):
@@ -465,3 +482,58 @@ def resultado_real(jugador_id: str, liga: str, fecha: str | None, equipo_fd: str
         f = d.sort_values("fecha").iloc[0]
         return int(f["tiros_arco"]) if bool(f["titular"]) else None
     return None
+
+
+# --- otras estadísticas del jugador: gol, asistencia, gol o asistencia --------------------
+
+_cache_eventos: dict = {}
+
+
+def resumen_evento(columna: str) -> dict:
+    try:
+        return json.loads(ruta_resumen(columna).read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def modelo_evento(columna: str, partidos: pd.DataFrame | None = None) -> ModeloJugadores | None:
+    """Modelo de goles / asistencias / gol o asistencia, con los parámetros y la recalibración de SU backtest."""
+    r = resumen_evento(columna)
+    if not r.get("parametros"):
+        return None
+    fuente = J.fuente_activa()
+    ap = J.cargar_apariciones(fuente)
+    if ap.empty or ("asistencias" not in ap.columns and columna != "goles"):
+        return None
+    if partidos is None:
+        partidos = datos.cargar_partidos()
+    fecha_ref = pd.Timestamp(dt.date.today() + dt.timedelta(days=1))
+    clave = (columna, fuente, J._firma_raw(fuente), datos._firma(), fecha_ref, ruta_resumen(columna).stat().st_mtime)
+    if _cache_eventos.get(columna, (None,))[0] == clave:
+        return _cache_eventos[columna][1]
+    ap = J.con_nombres_fd(ap, partidos)
+    prep = Preparado(ap, fecha_ref, modelos_arco(partidos, fecha_ref), columna)
+    m = ModeloJugadores(prep, Params(**r["parametros"]), fuente, f"backtest del {r.get('fecha', '?')}", r.get("recalibracion", {}))
+    _cache_eventos[columna] = (clave, m)
+    return m
+
+
+def eventos_partido(liga: str, local: str, visitante: str, n: int = 6) -> list[dict]:
+    """Jugadores de ambos equipos con P(tiro al arco 1+/2+/3+) y, si su backtest existe, P(gol), P(asistencia)
+    y P(gol o asistencia), todo en el escenario «titular» (Betano anula al jugador que no es titular)."""
+    r = jugadores_partido(liga, local, visitante, ESCENARIO_DEFECTO, n=n)
+    if not r.get("disponible"):
+        return []
+    otros = {c: modelo_evento(c) for c in EVENTOS}
+    out = []
+    for lado, eq, rival, es_local in (("local", local, visitante, True), ("visitante", visitante, local, False)):
+        for f in r[lado]:
+            fila = {"jugador_id": f["jugador_id"], "nombre": f["jugador"], "lado": lado,
+                    "p1": f["prob"].get("1+"), "p2": f["prob"].get("2+"), "p3": f["prob"].get("3+"),
+                    "titular": f.get("titular_en_ultimas_10")}
+            for c, m in otros.items():
+                pr = m.predecir(f["jugador_id"], liga, rival, es_local) if m else None
+                if pr:
+                    fila[c] = round(float(pr["probs"]["titular"][1]), 4)
+            out.append(fila)
+    return out

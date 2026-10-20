@@ -48,7 +48,7 @@ FUENTES = {"apifootball": "API-Football (api-sports.io)", "understat": "Understa
 
 COLUMNAS = ["fuente", "liga", "temporada", "partido_id", "fecha", "equipo", "rival", "es_local",
             "goles_equipo", "goles_rival", "jugador_id", "jugador", "posicion", "grupo_pos",
-            "titular", "minutos", "tiros", "tiros_arco", "goles"]
+            "titular", "minutos", "tiros", "tiros_arco", "goles", "asistencias"]
 
 # Grupos de posición para el prior (la media de tiros al arco de su posición)
 GRUPOS_US = {"GK": "POR", "DC": "DEF", "DL": "DEF", "DR": "DEF", "DMC": "MCD", "DML": "DEF", "DMR": "DEF",
@@ -327,7 +327,7 @@ def _normalizar_af(det: dict, liga: str, temporada: int) -> list[dict]:
                 "posicion": pos, "grupo_pos": GRUPOS_AF.get(pos, "MED"),
                 "titular": (not sup) if sup is not None else pid in titulares, "minutos": int(minutos),
                 "tiros": int(tiros.get("total") or 0), "tiros_arco": int(tiros.get("on") or 0),
-                "goles": int((st.get("goals") or {}).get("total") or 0),
+                "goles": int((st.get("goals") or {}).get("total") or 0), "asistencias": int((st.get("goals") or {}).get("assists") or 0),
             })
     return filas
 
@@ -420,6 +420,7 @@ def _normalizar_us(js: dict, liga: str, temporada: int) -> list[dict]:
                 "jugador": r["player"], "posicion": pos, "grupo_pos": GRUPOS_US.get(pos),  # "Sub": se completa luego
                 "titular": pos != "Sub", "minutos": minutos, "tiros": int(r.get("shots") or 0),
                 "tiros_arco": al_arco.get((str(r["player_id"]), lado), 0), "goles": int(r.get("goals") or 0),
+                "asistencias": int(r.get("assists") or 0),
             })
     return filas
 
@@ -474,10 +475,13 @@ def actualizar(progreso=None, fuentes: list[str] | None = None, max_partidos: in
 _cache: dict = {}
 
 
+VERSION_APARICIONES = 3  # 3: + asistencias (cambiar el número obliga a reconstruir la tabla)
+
+
 def _firma_raw(fuente: str) -> tuple:
     base = DIR_RAW_AF if fuente == "apifootball" else DIR_RAW_US
     archivos = list(base.glob("partidos_*/*.json.gz")) if base.exists() else []
-    return (len(archivos), max((a.stat().st_mtime for a in archivos), default=0))
+    return (VERSION_APARICIONES, len(archivos), max((a.stat().st_mtime for a in archivos), default=0))
 
 
 def cargar_apariciones(fuente: str | None = None) -> pd.DataFrame:

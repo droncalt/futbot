@@ -17,7 +17,9 @@ const mercadosCaptura = {
   '1t_goles': 'Goles 1.er tiempo', '2t_goles': 'Goles 2.º tiempo', '1t_1x2': 'Resultado 1.er tiempo',
   'corners': 'Más/Menos Córners', 'corners_local': 'Córners del local', 'corners_visitante': 'Córners del visitante',
   'tarjetas': 'Tarjetas Más/Menos', 'tiros_arco': 'Tiros al Arco (partido)', 'tiros_arco_local': 'Tiros al Arco del local',
-  'tiros_arco_visitante': 'Tiros al Arco del visitante', 'jug_arco': 'Jugador tiros al arco', 'otro': 'Otro (seguimiento manual)',
+  'tiros_arco_visitante': 'Tiros al Arco del visitante', 'jug_arco': 'Jugador tiros al arco', 'jug_gol': 'Jugador marca gol', 'jug_asist': 'Jugador da asistencia',
+  'jug_ga': 'Jugador marca o asiste', 'atajadas': 'Atajadas (ambos porteros)', 'atajadas_local': 'Atajadas del portero local',
+  'atajadas_visitante': 'Atajadas del portero visitante', 'otro': 'Otro (seguimiento manual)',
 };
 
 class PataCaptura {
@@ -52,6 +54,9 @@ class LecturaCaptura {
   final partidos = <PartidoCaptura>[];
   final patas = <PataCaptura>[];
   double? monto, cuotaTotal, ganancia;
+  String? estado; // 'ganada' | 'perdida' si la captura es de «Mis apuestas» ya resueltas
+  DateTime? fechaApuesta; // «Fecha de realización»
+  bool gratis = false; // APUESTA GRATIS
   final lineasVistas = <String, Set<int>>{};
   String texto = '';
   DateTime? get inicio => partidos.map((p) => p.inicio).whereType<DateTime>().fold<DateTime?>(null, (a, b) => a == null || b.isBefore(a) ? b : a);
@@ -136,7 +141,7 @@ const _ruido = ['betano', 'cupon apuestas', 'guardar', 'compartir', 'simple', 'c
   'resueltas', 'ganadas', 'cash out', 'perdidas', 'anuladas', 'deposito', 'inicio', 'en vivo', 'deportes', 'apuestas',
   'social', 'ganado con pago anticipado', 'pago anticipado', 'ganada', 'perdida', 'anulada', 'mis apuestas', 'cuota'];
 
-const _claveMercado = ['mas menos', 'goles totales', 'resultado partido', 'resultado final', 'corner', 'tiros al arco',
+const _claveMercado = ['atajada', 'goleador', 'asistencia', 'mas menos', 'goles totales', 'resultado partido', 'resultado final', 'corner', 'tiros al arco',
   'tiros arco', 'tiros puerta', 'tiros a puerta', 'ambos equipos', 'doble oportunidad', 'tarjeta', 'primer tiempo',
   'segundo tiempo', 'mitad', 'handicap', 'goleador', 'descanso', 'total goles', 'goles equipo'];
 
@@ -145,7 +150,11 @@ final _palabrasMercado = RegExp(
     r'tarjetas?( totales)?|ambos equipos (marcan|anotan)|doble oportunidad|primer tiempo|segundo tiempo',
     caseSensitive: false);
 
-bool _esMercado(String n) => _claveMercado.any(n.contains) && !RegExp(r'^(mas|menos) \d').hasMatch(n);
+// segundas mitades de un mercado partido en dos renglones («… Primer» / «Tiempo», «… Tiros al» / «Arco»)
+const _palabrasMercado2 = ['tiempo', 'arco', 'anotan', 'marcan', 'oportunidad', 'momento', 'tiros al', 'goles en primer'];
+
+bool _esMercado(String n) =>
+    (_claveMercado.any(n.contains) || _palabrasMercado2.any((k) => ' $n '.contains(' $k '))) && !RegExp(r'^(mas|menos) \d').hasMatch(n);
 bool _pareceSeleccion(String crudo, String n) =>
     RegExp(r'^(m[aá]s|menos|over|under)\s*(de\s*)?\d', caseSensitive: false).hasMatch(crudo) ||
     RegExp(r'^(si|no|empate)$').hasMatch(n) || RegExp(r'\d\s*\+').hasMatch(crudo);
@@ -156,6 +165,31 @@ LecturaCaptura leerTexto(List<String> crudos) {
   final rs = <_Renglon>[];
   for (final c in crudos) {
     final n0 = normal(c);
+    if (RegExp(r'^(simple|doble|triple|combinada|sistema)').hasMatch(n0) && RegExp(r'gan|perd|anul').hasMatch(n0)) {
+      r.estado = n0.contains('gan') ? 'ganada' : n0.contains('perd') ? 'perdida' : 'anulada';
+    }
+    if (n0.startsWith('fecha de realizacion') || n0.startsWith('fecha realizacion')) {
+      final f = RegExp(r'(\d{1,2})/(\d{1,2})/(\d{4})').firstMatch(c);
+      if (f != null) r.fechaApuesta = DateTime(int.parse(f.group(3)!), int.parse(f.group(2)!), int.parse(f.group(1)!));
+      continue;
+    }
+    if (n0.contains('apuesta gratis')) r.gratis = true;
+    if (n0.startsWith('id ') || n0 == 'id' || n0.startsWith('fecha de')) continue;
+    if (RegExp(r'^(simple|doble|triple|sistema)\b').hasMatch(n0) && RegExp(r'[sS]/').hasMatch(c)) {
+      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
+      if (monto != null) r.monto ??= _num(monto.group(1)!);
+      continue;
+    }
+    if (RegExp(r'^apuesta\b').hasMatch(n0) && RegExp(r'[sS]/').hasMatch(c)) {
+      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
+      if (monto != null) r.monto ??= _num(monto.group(1)!);
+      continue;
+    }
+    if (RegExp(r'^ganancia').hasMatch(n0)) {
+      final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
+      if (monto != null) r.ganancia = _num(monto.group(1)!);
+      continue;
+    }
     if (n0.startsWith('combinada') || n0.contains('colocar apuesta') || n0.contains('ganancia potencial') ||
         n0.contains('importe') || n0.contains('apuesta total')) {
       final monto = RegExp(r'[sS]/\.?\s*(\d{1,6}(?:[.,]\d{1,2})?)').firstMatch(c);
@@ -172,7 +206,7 @@ LecturaCaptura leerTexto(List<String> crudos) {
     final x = _limpiar(c);
     if (x.texto.isEmpty && x.cuota == null && x.hora == null && x.dia == null && x.marcador == null && x.fecha == null) continue;
     final n = x.n;
-    if (x.texto.isEmpty || RegExp(r'^\d+ ?\d*$').hasMatch(n) || _ruido.contains(n) ||
+    if (x.texto.isEmpty || RegExp(r'^\d+ ?\d*$').hasMatch(x.texto.trim()) || _ruido.contains(n) ||
         RegExp(r'^\d+/\d+$').hasMatch(x.texto)) {
       x.tipo = 'aux';
     } else if (n.contains('bet builder') || n.contains('crear apuesta')) {
@@ -320,7 +354,20 @@ void _interpretar(PataCaptura p, PartidoCaptura pc) {
   final antes = n.split('mas menos').first; // "rodez af" en "Rodez AF Más/Menos Córners"
   final deLocal = _nombra(antes, pc.local), deVisit = _nombra(antes, pc.visitante);
   final km = RegExp(r'(\d)\s*\+').firstMatch(s);
-  if ((n.contains('tiros') || n.contains('remate')) && (km != null || n.contains('jugador'))) {
+  final esJugadorGol = RegExp(r'goleador|marca|anota|gol en cualquier|asistencia|asiste').hasMatch(n) &&
+      !n.contains('goles totales') && !n.contains('mas menos') && !n.contains('ambos');
+  if (esJugadorGol) {
+    final ga = n.contains('asist') && RegExp(r'gol|marca|anota').hasMatch(n.replaceAll('goles', ''));
+    p.mercado = ga ? 'jug_ga' : n.contains('asist') ? 'jug_asist' : 'jug_gol';
+    p.opcion = RegExp(r'^no\b').hasMatch(ns) ? 'no' : 'si';
+    p.linea = 0.5;
+    final quien = s.length > 3 && !RegExp(r'^(si|no)$').hasMatch(ns) ? s : p.textoMercado;
+    p.jugador = quien.replaceAll(RegExp(r'\s*[-–]?\s*(goleador|marca|anota|asistencia|asiste|gol|en cualquier momento).*$',
+        caseSensitive: false), '').trim();
+  } else if (n.contains('atajada') && mm.isNotEmpty) {
+    p.mercado = deLocal ? 'atajadas_local' : deVisit ? 'atajadas_visitante' : 'atajadas';
+    p.opcion = mm;
+  } else if ((n.contains('tiros') || n.contains('remate')) && (km != null || n.contains('jugador'))) {
     p.mercado = 'jug_arco';
     final k = km == null ? 1 : int.parse(km.group(1)!);
     p.opcion = '$k+';
@@ -368,6 +415,11 @@ double? probPata(PataCaptura p, PartidoCaptura pc) {
   final mer = pc.mercados;
   final v = mer[_clave(p.mercado, p.opcion, p.linea)];
   if (v is num) return v.toDouble();
+  if (p.mercado == 'jug_gol' || p.mercado == 'jug_asist' || p.mercado == 'jug_ga') {
+    final j = jugadorDelPaquete(pc.paquete, p.jugador);
+    final v = (j?[{'jug_gol': 'goles', 'jug_asist': 'asistencias', 'jug_ga': 'ga'}[p.mercado]] as num?)?.toDouble();
+    return v == null ? null : (p.opcion == 'no' ? 1 - v : v);
+  }
   if (p.mercado == 'jug_arco') {
     final j = jugadorDelPaquete(pc.paquete, p.jugador);
     if (j != null) return (j['p${p.opcion.replaceAll('+', '')}'] as num?)?.toDouble();
@@ -448,6 +500,11 @@ Analisis analizar(LecturaCaptura r) {
   }
   final conProb = ops.where((o) => o.p != null).toList();
   final pTotal = conProb.length == ops.length ? ops.fold<double>(1, (a, o) => a * o.p!) : null;
+  if (r.estado == 'ganada' || r.estado == 'perdida') {
+    b.writeln(r.estado == 'ganada'
+        ? '✅ Esta apuesta ya GANÓ${r.ganancia != null ? ' (S/${f2(r.ganancia!)})' : ''}: la guardo en tu historial para aprender.'
+        : '❌ Esta apuesta se PERDIÓ: la guardo en tu historial para aprender qué falló.');
+  }
   b.writeln('📋 Leí ${ops.length == 1 ? '1 partido' : '${ops.length} partidos'} con ${r.patas.length} selecciones'
       '${cuota != null ? ' · cuota ${f2(cuota)}' : ''}${r.monto != null ? ' · S/${f2(r.monto!)}' : ''}.');
   b.writeln();
@@ -528,6 +585,11 @@ double? probGuardada(String local, String visitante, Map<String, dynamic> sel) {
   if (sel['mercado'] == 'jug_arco') {
     final j = jugadorDelPaquete(m, '${sel['jugador_nombre'] ?? ''}');
     return (j?['p${'${sel['opcion']}'.replaceAll('+', '')}'] as num?)?.toDouble();
+  }
+  final col = {'jug_gol': 'goles', 'jug_asist': 'asistencias', 'jug_ga': 'ga'}['${sel['mercado']}'];
+  if (col != null) {
+    final v = (jugadorDelPaquete(m, '${sel['jugador_nombre'] ?? ''}')?[col] as num?)?.toDouble();
+    return v == null ? null : (sel['opcion'] == 'no' ? 1 - v : v);
   }
   return null;
 }

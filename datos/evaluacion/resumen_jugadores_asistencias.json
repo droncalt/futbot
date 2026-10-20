@@ -1,0 +1,181 @@
+{
+ "fecha": "2026-10-19",
+ "columna": "asistencias",
+ "evento": "Da asistencia",
+ "fuente": "understat",
+ "periodo_ajuste": "2025-08-01 a 2025-12-31",
+ "periodo_validacion": "2026-01-01 a 2026-06-30",
+ "filas": {
+  "ajuste": 22710,
+  "validacion": 27258,
+  "actual": 9723
+ },
+ "parametros": {
+  "kappa": 25.0,
+  "xi": 0.0,
+  "beta": 0.5,
+  "suplente": true,
+  "poisson": false
+ },
+ "recalibracion": {
+  "usar": true,
+  "coeficientes": {
+   "suplente|1": [
+    0.0,
+    1.0
+   ],
+   "titular|1": [
+    -0.3272182598969271,
+    0.8950084334776416
+   ],
+   "sin_confirmar|1": [
+    -0.41633982643549944,
+    0.8587353872092581
+   ]
+  },
+  "logloss_validacion_cruda": 0.24137272510099095,
+  "logloss_validacion_recalibrada": 0.24126906220253314,
+  "error_calibracion_validacion_cruda": 0.004638290129260275,
+  "error_calibracion_validacion_recalibrada": 0.0034707341520215026
+ },
+ "por_evento": [
+  {
+   "evento": "Da asistencia (Titular)",
+   "periodo": "ajuste",
+   "n": 15791,
+   "prob_media": 0.07244617568422951,
+   "frecuencia_real": 0.07244633018808182,
+   "logloss": 0.24984587399570796,
+   "brier": 0.06578647622738686,
+   "error_calibracion": 0.0012356765435090834,
+   "mayor_desvio": 0.002770334497445487
+  },
+  {
+   "evento": "Da asistencia (Titular)",
+   "periodo": "validacion",
+   "n": 18974,
+   "prob_media": 0.07168009990237094,
+   "frecuencia_real": 0.07489195741541056,
+   "logloss": 0.25594209042301824,
+   "brier": 0.06775611734253183,
+   "error_calibracion": 0.003211857513039618,
+   "mayor_desvio": 0.0027696915471063233
+  },
+  {
+   "evento": "Da asistencia (Titular)",
+   "periodo": "actual",
+   "n": 6715,
+   "prob_media": 0.07375685873873236,
+   "frecuencia_real": 0.08428890543559196,
+   "logloss": 0.2789546472519683,
+   "brier": 0.07552641819523429,
+   "error_calibracion": 0.010930188763501901,
+   "mayor_desvio": 0.027503424038593433
+  },
+  {
+   "evento": "Da asistencia (Juega (titular o suplente))",
+   "periodo": "ajuste",
+   "n": 22710,
+   "prob_media": 0.05975350337963443,
+   "frecuencia_real": 0.059753412593571115,
+   "logloss": 0.21820130920363615,
+   "brier": 0.05517199292973754,
+   "error_calibracion": 0.0012352203318166844,
+   "mayor_desvio": 0.004241776946295045
+  },
+  {
+   "evento": "Da asistencia (Juega (titular o suplente))",
+   "periodo": "validacion",
+   "n": 27258,
+   "prob_media": 0.05937113027583937,
+   "frecuencia_real": 0.06310074106684276,
+   "logloss": 0.226596033982048,
+   "brier": 0.05791605018863642,
+   "error_calibracion": 0.0037296107910033877,
+   "mayor_desvio": 0.004349588349853023
+  },
+  {
+   "evento": "Da asistencia (Juega (titular o suplente))",
+   "periodo": "actual",
+   "n": 9723,
+   "prob_media": 0.061143317824305335,
+   "frecuencia_real": 0.0693201686722205,
+   "logloss": 0.2436159647760909,
+   "brier": 0.06331551181296576,
+   "error_calibracion": 0.008184670321412336,
+   "mayor_desvio": 0.024039364293937146
+  }
+ ],
+ "calibracion_validacion": {
+  "titular": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 14966,
+    "prob_estimada": 0.05643116372484343,
+    "frecuencia_real": 0.05920085527194975
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 3931,
+    "prob_estimada": 0.1264567756116477,
+    "frecuencia_real": 0.1289748155685576
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 70,
+    "prob_estimada": 0.23132881024429613,
+    "frecuencia_real": 0.35714285714285715
+   },
+   {
+    "lo": 0.3,
+    "hi": 0.4,
+    "n": 7,
+    "prob_estimada": 0.3164025135845222,
+    "frecuencia_real": 0.42857142857142855
+   }
+  ],
+  "sin_confirmar": [
+   {
+    "lo": 0.0,
+    "hi": 0.1,
+    "n": 24075,
+    "prob_estimada": 0.05085249106052972,
+    "frecuencia_real": 0.054164070612668744
+   },
+   {
+    "lo": 0.1,
+    "hi": 0.2,
+    "n": 3124,
+    "prob_estimada": 0.1217707701648717,
+    "frecuencia_real": 0.12612035851472472
+   },
+   {
+    "lo": 0.2,
+    "hi": 0.3,
+    "n": 59,
+    "prob_estimada": 0.23140103019521202,
+    "frecuencia_real": 0.3728813559322034
+   }
+  ]
+ },
+ "calibrado": {
+  "titular": {
+   "ece": 0.003211857513039618,
+   "mayor_desvio": 0.0027696915471063233,
+   "calibrado": true
+  },
+  "sin_confirmar": {
+   "ece": 0.0037296107910033877,
+   "mayor_desvio": 0.004349588349853023,
+   "calibrado": true
+  }
+ },
+ "criterio": {
+  "ece_max": 0.02,
+  "desvio_max": 0.05,
+  "n_min_bin": 200
+ }
+}

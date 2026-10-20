@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'armador.dart';
 import 'captura.dart';
 import 'compartir.dart';
 import 'comunes.dart';
@@ -25,8 +26,23 @@ class Pedido {
   final sinFamilias = <String>{};
   final equipos = <String>{}, ligas = <String>{};
   final tipos = <String>{}; // prefijos "mercado|opcion|linea": btts|si, doble|, goles|mas|2.5, jug_arco|
+  bool restringir = false; // «solo córners», «con tiros al arco y córners»: usar SOLO esos mercados
+  bool ampliar = false; // «agrégale más líneas»: continúa el pedido anterior
   bool get vacio => nivel == null && cuota == null && pMin == null && n == null && familias.isEmpty && equipos.isEmpty &&
       ligas.isEmpty && dia == null && tipos.isEmpty;
+
+  /// Completa lo que no dice con el pedido anterior (equipos, cuota, día, nivel…).
+  void heredar(Pedido a) {
+    if (equipos.isEmpty) equipos.addAll(a.equipos);
+    if (ligas.isEmpty) ligas.addAll(a.ligas);
+    nivel ??= a.nivel;
+    dia ??= a.dia;
+    cuota ??= a.cuota;
+    pMin ??= a.pMin;
+    monto ??= a.monto;
+    n ??= a.n;
+    sinFamilias.addAll(a.sinFamilias);
+  }
 }
 
 const _numeros = {'una': 1, 'un': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10};
@@ -84,14 +100,37 @@ Pedido entender(String texto) {
     p.tipos.add('goles|${mas ? 'mas' : 'menos'}|${m.group(2)}.5');
   }
   if (RegExp(r'tiros? al arco|remates?|tiros? a puerta').hasMatch(t)) p.tipos.addAll(['jug_arco|', 'tiros_arco']);
+  if (RegExp(r'atajada|paradas|portero|arquero').hasMatch(t)) p.tipos.add('atajadas');
+  if (RegExp(r'(hace|haga|marca|anota|meta) gol|goleador').hasMatch(t)) p.tipos.addAll(['jug_gol|', 'jug_ga|']);
+  if (RegExp(r'asisten|asiste|asistencia').hasMatch(t)) p.tipos.addAll(['jug_asist|', 'jug_ga|']);
+  if (RegExp(r'tarjeta|amarilla').hasMatch(t)) p.tipos.add('tarjetas');
+  if (RegExp(r'corner|esquina').hasMatch(t)) p.tipos.add('corners');
+  p.restringir = RegExp(r'\b(solo|solamente|unicamente|nada mas que|con) (de )?(los |las )?(corner|tarjeta|tiros|remate|ambos|doble|'
+          r'goles|mas de|menos de|atajada|jugador|over|under)')
+      .hasMatch(t);
+  p.ampliar = RegExp(r'\b(agrega|agregale|anade|anadele|aumenta|aumentale|suma|sumale|subele|mas lineas|otras lineas|'
+          r'artas lineas|mas opciones|completa|completale|ponle|metele)\b')
+      .hasMatch(t);
   for (final e in _ligas.entries) {
     if (t.contains(' ${e.key} ')) p.ligas.add(e.value);
   }
-  for (final eq in _equiposDelPaquete()) {
-    final n = normal(eq);
-    final palabras = n.split(' ').where((w) => w.length >= 4 && !{'real', 'united', 'city', 'club', 'sporting', 'athletic', 'atletico', 'inter'}.contains(w));
-    if (t.contains(' $n ') || palabras.any((w) => t.contains(' $w '))) p.equipos.add(eq);
+  final todos = _equiposDelPaquete();
+  final completos = {for (final eq in todos) if (t.contains(' ${normal(eq)} ')) eq};
+  p.equipos.addAll(completos);
+  const genericas = {'real', 'united', 'city', 'club', 'sporting', 'athletic', 'atletico', 'inter', 'manchester', 'saint',
+    'germain', 'paris', 'madrid', 'munich', 'borussia', 'olympique', 'deportivo', 'racing', 'union'};
+  for (final eq in todos) {
+    if (completos.contains(eq)) continue;
+    final palabras = normal(eq).split(' ').where((w) => w.length >= 4 && !genericas.contains(w));
+    final suelta = palabras.where((w) => t.contains(' $w ') && !completos.any((c) => normal(c).split(' ').contains(w)));
+    if (suelta.isNotEmpty) p.equipos.add(eq);
   }
+  // alias comunes
+  const alias = {'barca': 'Barcelona', 'psg': 'Paris Saint-Germain', 'city': 'Manchester City', 'united': 'Manchester United',
+    'madrid': 'Real Madrid', 'bayern': 'Bayern Múnich', 'atleti': 'Atlético Madrid', 'inter': 'Inter', 'juve': 'Juventus'};
+  alias.forEach((a, nombre) {
+    if (t.contains(' $a ') && todos.contains(nombre) && !p.equipos.any((e) => normal(e).contains(a))) p.equipos.add(nombre);
+  });
   return p;
 }
 
@@ -114,25 +153,35 @@ class Opcion {
 String familiaDe(Pata p) {
   final m = '${p.sel['mercado']}';
   if (m.startsWith('corners')) return 'corners';
-  if (m == 'tarjetas') return 'tarjetas';
-  if (m == 'jug_arco' || m.startsWith('tiros_arco')) return 'jugadores';
+  if (m.startsWith('tarjetas')) return 'tarjetas';
+  if (m.startsWith('atajadas')) return 'atajadas';
+  if (m.startsWith('jug_') || m.startsWith('tiros_arco')) return 'jugadores';
   if (m == '1x2' || m == 'doble' || m == '1t_1x2') return 'resultado';
   return 'goles';
 }
 
-/// Lo aprendido de tus patas resueltas (mercado → [aciertos, total, suma prob. prometida]).
-Map<String, List<double>> aprendido = {};
+/// Lo aprendido de tus patas resueltas (mercado → estadística con y sin probabilidad del bot).
+Map<String, EstadMercado> aprendido = {};
 
 /// Corrige la probabilidad de una pata con tu historial, con encogimiento k = n/(n+300) (igual que la
 /// calibración del backtest): con pocas patas casi no cambia; con cientos pesa de verdad.
 double corregir(String mercado, double p) {
   final v = aprendido[mercado];
-  if (v == null || v[1] < 5) return p;
-  final k = v[1] / (v[1] + 300);
-  return (p + k * (v[0] / v[1] - v[2] / v[1])).clamp(0.02, 0.99).toDouble();
+  if (v == null || v.conP < 5) return p;
+  final k = v.conP / (v.conP + 300);
+  return (p + k * (v.aciertosConP / v.conP - v.sumaP / v.conP)).clamp(0.02, 0.99).toDouble();
 }
 
-List<Opcion> opciones(Pedido q) {
+/// Umbrales por pata y por Bet Builder. Por defecto «muy seguras»; si con eso no se llega a la cuota pedida se
+/// relajan de a poco (el bot lo avisa).
+// (prob. mínima de CADA selección, prob. mínima de un Bet Builder completo). La seguridad se exige a cada selección;
+// el total de la combinada es el que resulte (el chat lo muestra) y siempre se elige la combinación más probable.
+const escalonesSeguridad = [(0.85, 0.12), (0.80, 0.10), (0.75, 0.08), (0.70, 0.07), (0.65, 0.06), (0.60, 0.05)];
+
+int _escalonInicial(Pedido q) => switch (q.nivel) { 'equilibrada' => 3, 'segura' => 1, _ => 0 };
+
+List<Opcion> opciones(Pedido q, [int escalon = -1]) {
+  final esc = escalonesSeguridad[escalon < 0 ? _escalonInicial(q) : escalon];
   final ahora = DateTime.now();
   final hoy = DateTime(ahora.year, ahora.month, ahora.day);
   final niveles = q.nivel == null ? ['ultra', 'segura', 'equilibrada'] : [q.nivel!];
@@ -144,7 +193,7 @@ List<Opcion> opciones(Pedido q) {
       if (q.dia == 'manana' && (l.inicio.isBefore(hoy.add(const Duration(days: 1))) || !l.inicio.isBefore(hoy.add(const Duration(days: 2))))) continue;
       if (q.dia == 'finde' && l.inicio.weekday < DateTime.saturday) continue;
       if (q.ligas.isNotEmpty && !q.ligas.contains(l.liga)) continue;
-      if (q.equipos.isNotEmpty && !q.equipos.any((e) => parecido(e, l.local.nombre) > 0.8 || parecido(e, l.visitante.nombre) > 0.8)) continue;
+      if (q.equipos.isNotEmpty && !q.equipos.any((e) => esDelPartido(e, l.local.nombre, l.visitante.nombre))) continue;
       for (final e in l.sub.entries) {
         var o = Opcion(l, e.key, e.value.p, e.value.cuota, e.value.estimada);
         var factor = 1.0;
@@ -152,21 +201,21 @@ List<Opcion> opciones(Pedido q) {
           factor *= corregir('${pa.sel['mercado']}', pa.p) / pa.p;
         }
         if (factor != 1.0) o = Opcion(l, e.key, (o.p * factor).clamp(0.01, 0.99).toDouble(), o.cuota, o.estimada);
+        if (o.patas.any((pa) => pa.p < esc.$1)) continue;
         final fams = o.patas.map(familiaDe).toSet();
         if (fams.any(q.sinFamilias.contains)) continue;
-        if (q.familias.isNotEmpty && !fams.every(q.familias.contains)) continue;
         if (o.cuota < 1.04) continue;
         final k = '${o.clavePartido}|${o.patas.map((x) => x.titulo).join('+')}';
         if (!out.containsKey(k) || out[k]!.p < o.p) out[k] = o;
       }
     }
   }
-  for (final o in _sueltas(q)) {
+  for (final o in _sueltas(q, esc.$1, esc.$2)) {
     final k = '${o.clavePartido}|${o.patas.map((x) => x.titulo).join('+')}';
     out.putIfAbsent(k, () => o);
   }
   final lista = out.values.toList();
-  if (q.tipos.isEmpty) return lista;
+  if (!q.restringir || (q.tipos.isEmpty && q.familias.isEmpty)) return lista;
   return lista.where((o) => o.patas.every((pa) => _pide(q, pa))).toList();
 }
 
@@ -179,116 +228,27 @@ String _clavePata(Pata pa) {
   return '${pa.sel['mercado']}|${pa.sel['opcion']}|${l ?? ''}';
 }
 
-/// Mercados que el chat puede usar con las probabilidades del partido. {local}/{visit} se reemplazan por los equipos.
-const _sueltasClaves = {
-  'doble|1X|': ('1X ({local} o empate)', 'Doble oportunidad'), 'doble|X2|': ('X2 (empate o {visit})', 'Doble oportunidad'),
-  'doble|12|': ('12 (no hay empate)', 'Doble oportunidad'),
-  'goles|mas|0.5': ('Más de 0.5', 'Goles totales Más/Menos'), 'goles|mas|1.5': ('Más de 1.5', 'Goles totales Más/Menos'),
-  'goles|mas|2.5': ('Más de 2.5', 'Goles totales Más/Menos'), 'goles|menos|3.5': ('Menos de 3.5', 'Goles totales Más/Menos'),
-  'goles|menos|4.5': ('Menos de 4.5', 'Goles totales Más/Menos'), 'goles|menos|5.5': ('Menos de 5.5', 'Goles totales Más/Menos'),
-  'goles_local|mas|0.5': ('Más de 0.5', '{local} - Goles totales Más/Menos'),
-  'goles_visitante|mas|0.5': ('Más de 0.5', '{visit} - Goles totales Más/Menos'),
-  '1t_goles|mas|0.5': ('Más de 0.5', 'Más/Menos Goles en Primer Tiempo'),
-  'btts|si|': ('Sí', 'Ambos equipos anotan'), 'btts|no|': ('No', 'Ambos equipos anotan'),
-  'corners|mas|5.5': ('Más de 5.5', 'Más/Menos Córners'), 'corners|mas|6.5': ('Más de 6.5', 'Más/Menos Córners'),
-  'corners|mas|7.5': ('Más de 7.5', 'Más/Menos Córners'), 'corners|mas|8.5': ('Más de 8.5', 'Más/Menos Córners'),
-  'corners_local|mas|1.5': ('Más de 1.5', '{local} Más/Menos Córners'), 'corners_local|mas|2.5': ('Más de 2.5', '{local} Más/Menos Córners'),
-  'corners_local|mas|3.5': ('Más de 3.5', '{local} Más/Menos Córners'),
-  'corners_visitante|mas|1.5': ('Más de 1.5', '{visit} Más/Menos Córners'),
-  'corners_visitante|mas|2.5': ('Más de 2.5', '{visit} Más/Menos Córners'),
-  'tarjetas|mas|1.5': ('Más de 1.5', 'Tarjetas Más/Menos'), 'tarjetas|mas|2.5': ('Más de 2.5', 'Tarjetas Más/Menos'),
-  'tarjetas|mas|3.5': ('Más de 3.5', 'Tarjetas Más/Menos'),
-  'tiros_arco|mas|4.5': ('Más de 4.5', 'Tiros al Arco'), 'tiros_arco|mas|5.5': ('Más de 5.5', 'Tiros al Arco'),
-  'tiros_arco|mas|6.5': ('Más de 6.5', 'Tiros al Arco'), 'tiros_arco|mas|7.5': ('Más de 7.5', 'Tiros al Arco'),
-  'tiros_arco_local|mas|1.5': ('Más de 1.5', '{local} Tiros al Arco'), 'tiros_arco_local|mas|2.5': ('Más de 2.5', '{local} Tiros al Arco'),
-  'tiros_arco_visitante|mas|1.5': ('Más de 1.5', '{visit} Tiros al Arco'),
-  'tiros_arco_visitante|mas|2.5': ('Más de 2.5', '{visit} Tiros al Arco'),
-};
+/// ¿El equipo pedido juega este partido? (nombre completo; «Manchester City» no es «Manchester United»)
+bool esDelPartido(String pedido, String local, String visitante) => pedido == local || pedido == visitante;
 
-/// Prob. mínima de CADA selección y de cada Bet Builder según el nivel (por defecto: muy seguras).
-(double, double) _umbrales(Pedido q) => switch (q.nivel) {
-      'equilibrada' => (0.72, 0.60),
-      'segura' => (0.80, 0.70),
-      _ => (0.85, 0.75),
-    };
-
-double _cuotaEstimada(double p) => double.parse((1 / (p * 1.06)).clamp(1.01, 50).toStringAsFixed(2));
-
-/// Selecciones del partido (una pata) con la probabilidad del bot, ya corregida con tu historial.
-List<Pata> _patasPartido(Map<String, dynamic> m, double minP) {
-  final mer = Map<String, dynamic>.from(m['mercados'] ?? {});
-  final ln = '${m['local']?['nombre'] ?? ''}', vn = '${m['visitante']?['nombre'] ?? ''}';
-  final patas = <Pata>[];
-  _sueltasClaves.forEach((k, v) {
-    final p0 = (mer[k] as num?)?.toDouble();
-    if (p0 == null || p0 > 0.985) return;
-    final c = k.split('|');
-    final p = corregir(c[0], p0);
-    if (p < minP) return;
-    patas.add(Pata(v.$1.replaceAll('{local}', ln).replaceAll('{visit}', vn), v.$2.replaceAll('{local}', ln).replaceAll('{visit}', vn), p,
-        {'mercado': c[0], 'opcion': c[1], 'linea': c[2].isEmpty ? null : double.parse(c[2])}));
-  });
-  for (final j in (m['jugadores'] as List? ?? [])) {
-    final k = (j['linea_min'] as num?)?.toInt() ?? 1;
-    final p = (j['p$k'] as num?)?.toDouble();
-    if (p == null || p < minP) continue;
-    patas.add(Pata('$k+', '${j['nombre']} Tiros al Arco', p,
-        {'mercado': 'jug_arco', 'opcion': '$k+', 'linea': k - 0.5, 'jugador_nombre': j['nombre'], 'lado': j['lado']}));
-  }
-  return patas;
-}
-
-/// Grupo de una pata: no se juntan dos del mismo grupo en un Bet Builder (salvo Más + Menos del mismo conteo).
-String _grupo(Pata p) {
-  final m = '${p.sel['mercado']}';
-  if (m == 'jug_arco') return 'jug|${p.sel['jugador_nombre']}';
-  if (m == 'doble' || m == '1x2') return 'resultado';
-  return '$m|${p.sel['opcion']}';
-}
-
-/// Probabilidad conjunta de patas del MISMO partido: Más y Menos del mismo conteo como intervalo exacto
-/// (Más 0.5 + Menos 4.5 = entre 1 y 4 goles); entre mercados distintos se multiplica (aproximación).
-double _conjunta(List<Pata> patas, Map<String, dynamic> mer) {
-  final porM = <String, List<Pata>>{};
-  for (final p in patas) {
-    porM.putIfAbsent('${p.sel['mercado']}', () => []).add(p);
-  }
-  var prob = 1.0;
-  for (final e in porM.entries) {
-    final mas = e.value.where((x) => x.sel['opcion'] == 'mas').toList();
-    final menos = e.value.where((x) => x.sel['opcion'] == 'menos').toList();
-    if (mas.length == 1 && menos.length == 1) {
-      final pLo = (mer['${e.key}|mas|${(mas.first.sel['linea'] as num).toDouble()}'] as num?)?.toDouble();
-      final pHi = (mer['${e.key}|mas|${(menos.first.sel['linea'] as num).toDouble()}'] as num?)?.toDouble();
-      if (pLo != null && pHi != null) {
-        prob *= (pLo - pHi).clamp(0.0, 1.0);
-        continue;
-      }
-    }
-    for (final p in e.value) {
-      prob *= p.p;
-    }
-  }
-  return prob;
-}
-
-Opcion _opcionSuelta(Map<String, dynamic> m, DateTime ini, List<Pata> patas, double p, double cuota) {
+Opcion _opcion(Map<String, dynamic> m, DateTime ini, BetBuilder bb) {
   final local = Equipo.de(Map<String, dynamic>.from(m['local'])), visit = Equipo.de(Map<String, dynamic>.from(m['visitante']));
+  final patas = [for (final s in bb.patas) s.pata];
   final mask = (1 << patas.length) - 1;
-  final l = Linea('suelta|${local.nombre}|${patas.map((x) => '${x.titulo}${x.mercado}').join('+')}', '${m['liga']}',
+  final l = Linea('suelta|${local.nombre}|${bb.patas.map((x) => x.clave).join('+')}', '${m['liga']}',
       '${m['liga_nombre'] ?? m['liga']}', '${m['betano'] ?? 'https://www.betano.pe/sport/futbol/'}', ini, local, visit, patas,
-      {mask: Sub(p, cuota, true)}, cuota, p, true, false, false,
+      {mask: Sub(bb.p, bb.cuota, true)}, bb.cuota, bb.p, true, false, false,
       patas.length > 1 ? const ['Bet Builder armado por el chat: cuota estimada (Betano la calcula al armarlo).'] : const []);
-  return Opcion(l, mask, p, cuota, true);
+  return Opcion(l, mask, bb.p, bb.cuota, true);
 }
 
-/// Por partido: cada selección segura sola y Bet Builders de 2 a 4 selecciones seguras de mercados distintos
-/// (goles, córners, tarjetas, tiros al arco, jugador, doble oportunidad). Cuota estimada (≈).
-List<Opcion> _sueltas(Pedido q) {
+/// Por partido: los mejores Bet Builders con selecciones seguras de TODOS los mercados que el bot calcula
+/// (goles, doble oportunidad, ambos anotan, 1.er tiempo, córners, tarjetas, tiros al arco, atajadas, jugadores).
+/// Con pocos partidos (filtro de equipos) se buscan Bet Builders de hasta 10 patas; con muchos, hasta 4.
+List<Opcion> _sueltas(Pedido q, double minPata, double minBB) {
   final ahora = DateTime.now();
   final hoy = DateTime(ahora.year, ahora.month, ahora.day);
-  final (minPata, minBB) = _umbrales(q);
-  final out = <Opcion>[];
+  final partidos = <Map<String, dynamic>>[];
   for (final m in repo.partidos) {
     final ini = DateTime.tryParse('${m['inicio']}'.replaceAll(' ', 'T'));
     if (ini == null || !ini.isAfter(ahora)) continue;
@@ -297,38 +257,20 @@ List<Opcion> _sueltas(Pedido q) {
     if (q.dia == 'finde' && ini.weekday < DateTime.saturday) continue;
     if (q.ligas.isNotEmpty && !q.ligas.contains('${m['liga']}')) continue;
     final ln = '${m['local']?['nombre'] ?? ''}', vn = '${m['visitante']?['nombre'] ?? ''}';
-    if (q.equipos.isNotEmpty && !q.equipos.any((e) => parecido(e, ln) > 0.8 || parecido(e, vn) > 0.8)) continue;
-    final mer = Map<String, dynamic>.from(m['mercados'] ?? {});
-    final patas = _patasPartido(Map<String, dynamic>.from(m), minPata);
-    if (q.tipos.isNotEmpty) patas.retainWhere((pa) => _pide(q, pa));
-    for (final pa in patas) {
-      final c = _cuotaEstimada(pa.p);
-      if (c >= 1.04) out.add(_opcionSuelta(m, ini, [pa], pa.p, c));
+    if (q.equipos.isNotEmpty && !q.equipos.any((e) => esDelPartido(e, ln, vn))) continue;
+    partidos.add(Map<String, dynamic>.from(m));
+  }
+  final pocos = partidos.length <= 4;
+  final out = <Opcion>[];
+  for (final m in partidos) {
+    final ini = DateTime.parse('${m['inicio']}'.replaceAll(' ', 'T'));
+    var cands = seleccionesPartido(m, corregir);
+    cands.removeWhere((s) => q.sinFamilias.contains(familiaDe(s.pata)));
+    if (q.restringir && (q.tipos.isNotEmpty || q.familias.isNotEmpty)) cands.retainWhere((s) => _pide(q, s.pata));
+    final bbs = betBuilders(m, cands, minPata: minPata, minBB: minBB, maxPatas: pocos ? 10 : 4, ancho: pocos ? 40 : 14);
+    for (final bb in bbs) {
+      if (bb.cuota >= 1.04) out.add(_opcion(m, ini, bb));
     }
-    // Bet Builders: de las más seguras, combinaciones de grupos distintos
-    final mejores = ([...patas]..sort((a, b) => b.p.compareTo(a.p))).take(8).toList();
-    final combos = <Opcion>[];
-    void armar(int desde, List<Pata> act) {
-      if (act.length >= 2) {
-        final p = _conjunta(act, mer);
-        if (p >= minBB) {
-          final c = double.parse((act.fold<double>(1, (a, x) => a * _cuotaEstimada(x.p)) * 0.93).clamp(1.01, 50).toStringAsFixed(2));
-          if (c >= 1.10) combos.add(_opcionSuelta(m, ini, [...act], p, c));
-        }
-      }
-      if (act.length == 4) return;
-      for (var i = desde; i < mejores.length; i++) {
-        final g = _grupo(mejores[i]);
-        final mercado = '${mejores[i].sel['mercado']}';
-        // mismo grupo no; del mismo conteo solo Más + Menos (intervalo)
-        if (act.any((x) => _grupo(x) == g)) continue;
-        if (act.where((x) => '${x.sel['mercado']}' == mercado).length >= 2) continue;
-        armar(i + 1, [...act, mejores[i]]);
-      }
-    }
-    armar(0, []);
-    combos.sort((a, b) => (b.p * math.log(b.cuota)).compareTo(a.p * math.log(a.cuota)));
-    out.addAll(combos.take(8));
   }
   return out;
 }
@@ -443,22 +385,29 @@ class Mensaje {
   final LecturaCaptura? lectura;
   final double monto;
   final List<(String, String)> investigar; // partidos (local, visitante) a buscar en internet después de responder
-  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10, this.investigar = const []});
+  final Pedido? pedido;
+  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10, this.investigar = const [], this.pedido});
 }
 
 List<(String, String)> _partidosDe(Set<String> equipos) => [
       for (final m in repo.partidos)
-        if (equipos.any((e) => parecido(e, '${m['local']?['nombre']}') > 0.8 || parecido(e, '${m['visitante']?['nombre']}') > 0.8))
+        if (equipos.any((e) => esDelPartido(e, '${m['local']?['nombre']}', '${m['visitante']?['nombre']}')))
           ('${m['local']?['nombre']}', '${m['visitante']?['nombre']}'),
     ].take(3).toList();
 
-Future<Mensaje> responder(String texto) async {
+Future<Mensaje> responder(String texto, {Pedido? previo}) async {
   final t = ' ${normal(texto)} ';
-  // reglas de Betano
-  for (final r in repo.reglas) {
-    final claves = (r['claves'] as List? ?? []).map((e) => normal('$e'));
-    if (claves.any((c) => c.isNotEmpty && t.contains(c)) && !RegExp(r'fija|combinada|boleta|cuota \d').hasMatch(t)) {
-      return Mensaje(false, '📘 ${r['titulo']}\n\n${r['texto']}');
+  final pideAlgo = RegExp(r'\b(arma|armame|dame|agrega|agregale|anade|combina|quiero|hazme|genera|crea|pon|ponle|suma|'
+          r'sumale|fija|fijas|combinada|boleta|cuota \d|mas lineas|lineas)')
+      .hasMatch(t);
+  final pregunta = texto.contains('?') || RegExp(r'^ (que|como|cual|cuando|donde|por que|explica|explicame|cuanto) ').hasMatch(t);
+  // reglas de Betano: solo si es una pregunta (no un pedido de fijas)
+  if (pregunta && !pideAlgo) {
+    for (final r in repo.reglas) {
+      final claves = (r['claves'] as List? ?? []).map((e) => normal('$e'));
+      if (claves.any((c) => c.isNotEmpty && t.contains(c))) {
+        return Mensaje(false, '📘 ${r['titulo']}\n\n${r['texto']}');
+      }
     }
   }
   if (RegExp(r'ayuda|que puedes|como funciona|como te uso|comandos').hasMatch(t)) {
@@ -482,10 +431,14 @@ Future<Mensaje> responder(String texto) async {
     }
   }
   final q = entender(texto);
+  if (previo != null && (q.ampliar || (q.equipos.isEmpty && q.cuota == null && pideAlgo))) {
+    q.heredar(previo);
+    q.ampliar = true;
+  }
   if (RegExp(r'analiza|analisis|como ves|que opinas|pronostico').hasMatch(t) && q.equipos.isNotEmpty) {
     return Mensaje(false, _analizar(q.equipos), investigar: _partidosDe(q.equipos));
   }
-  if (q.vacio && !RegExp(r'fija|combinada|boleta|apuesta|parley|pick').hasMatch(t)) {
+  if (q.vacio && !pideAlgo && !RegExp(r'apuesta|parley|pick').hasMatch(t)) {
     return Mensaje(false, 'No te entendí del todo 🤔. Prueba «3 fijas para hoy», «cuota 2 con 80%» o escribe «ayuda».');
   }
   return _armar(q);
@@ -496,14 +449,15 @@ Mensaje _armar(Pedido q) {
     return Mensaje(false, 'Betano permite máximo ${LimitesBetano.maxSelecciones} selecciones por cupón. '
         'Pídeme ${LimitesBetano.maxSelecciones} o menos.');
   }
-  final ops = opciones(q);
+  var escalon = _escalonInicial(q);
+  var ops = opciones(q, escalon);
   final monto = math.max(q.monto ?? 10, LimitesBetano.minima);
   final filtro = [
     if (q.nivel != null) 'nivel ${q.nivel}',
     if (q.dia != null) q.dia == 'finde' ? 'fin de semana' : q.dia == 'manana' ? 'mañana' : 'hoy',
     if (q.equipos.isNotEmpty) q.equipos.join(', '),
     if (q.ligas.isNotEmpty) q.ligas.join(', '),
-    if (q.familias.isNotEmpty) 'solo ${q.familias.join('/')}',
+    if (q.restringir && q.familias.isNotEmpty) 'solo ${q.familias.join('/')}',
     if (q.sinFamilias.isNotEmpty) 'sin ${q.sinFamilias.join('/')}',
   ].join(' · ');
   if (ops.isEmpty) {
@@ -515,13 +469,25 @@ Mensaje _armar(Pedido q) {
   final notas = <String>[];
   if (q.cuota != null) {
     // hasta 20 partidos (Betano admite 30 por cupón; cada Bet Builder cuenta como una selección)
-    sel = mejorParaCuota(ops, q.cuota!, math.min(20, LimitesBetano.maxSelecciones),
-        exacto: q.n == null ? null : math.min(q.n!, LimitesBetano.maxSelecciones));
+    final maxN = math.min(20, LimitesBetano.maxSelecciones);
+    final exacto = q.n == null ? null : math.min(q.n!, LimitesBetano.maxSelecciones);
+    sel = mejorParaCuota(ops, q.cuota!, maxN, exacto: exacto);
+    // si con selecciones muy seguras no se llega, se baja la exigencia de a poco (y se avisa)
+    while (sel == null && escalon < escalonesSeguridad.length - 1) {
+      escalon++;
+      ops = opciones(q, escalon);
+      sel = mejorParaCuota(ops, q.cuota!, maxN, exacto: exacto);
+    }
+    if (sel != null && escalon > _escalonInicial(q)) {
+      notas.add('⚠️ Con selecciones de ${pct(escalonesSeguridad[_escalonInicial(q)].$1)} o más no llegaba a cuota '
+          '${f2(q.cuota!)}${q.equipos.isNotEmpty ? ' con esos partidos' : ''}: usé selecciones desde '
+          '${pct(escalonesSeguridad[escalon].$1)}. Si quieres más seguridad, pide una cuota menor o suma partidos.');
+    }
     if (sel == null) {
       final todo = mejoresN(ops, 20, 1.0);
       return Mensaje(false, 'Con ${filtro.isEmpty ? 'lo disponible' : filtro} no llego a cuota ${f2(q.cuota!)}'
           '${q.n != null ? ' con ${q.n} partidos' : ''}. Lo máximo sería ≈${f2(_prod(todo.map((o) => o.cuota)))}. '
-          'Quita filtros, sube el número de partidos o usa «equilibrada».');
+          'Quita filtros, suma partidos o pide una cuota menor.', pedido: q);
     }
     if (q.pMin != null && _prod(sel.map((o) => o.p)) < q.pMin!) {
       final alt = maxCuotaConProb(ops, q.pMin!);
@@ -551,10 +517,16 @@ Mensaje _armar(Pedido q) {
   for (final x in notas) {
     b.write('\n$x');
   }
-  final nAprendidas = aprendido.values.fold<double>(0, (a, v) => a + v[1]).toInt();
+  final nAprendidas = aprendido.values.fold<int>(0, (a, v) => a + v.conP);
   if (nAprendidas >= 5) b.write('\nProbabilidades ajustadas con $nAprendidas patas resueltas de tu historial.');
   if (sel.any((o) => o.estimada)) b.write('\nCuotas con ≈ son estimadas: confírmalas en Betano antes de apostar.');
-  return Mensaje(false, b.toString(), boleta: sel, monto: monto);
+  final nPatas = sel.fold<int>(0, (a, o) => a + o.patas.length);
+  if (nPatas > sel.length) {
+    final ps = [for (final o in sel) for (final pa in o.patas) pa.p]..sort();
+    b.write('\n${sel.length} selección(es) en el cupón con $nPatas mercados en total (Bet Builders). Cada mercado tiene entre '
+        '${pct(ps.first)} y ${pct(ps.last)} de cumplirse; juntos bajan porque hay que acertar todos.');
+  }
+  return Mensaje(false, b.toString(), boleta: sel, monto: monto, pedido: q);
 }
 
 String _analizar(Set<String> equipos) {
@@ -609,12 +581,13 @@ Future<String> _resumenHistorial() async {
   final gan = cerradas.where((x) => x['estado'] == 'ganada').length;
   final pend = b.where((x) => x['estado'] == 'pendiente').length;
   final porM = Historial.porMercado(b);
-  final peor = porM.entries.where((e) => e.value[1] >= 5).toList()
-    ..sort((x, y) => (x.value[0] / x.value[1] - x.value[2] / x.value[1]).compareTo(y.value[0] / y.value[1] - y.value[2] / y.value[1]));
+  final peor = porM.entries.where((e) => e.value.conP >= 5).toList()
+    ..sort((x, y) => (x.value.aciertosConP / x.value.conP - x.value.sumaP / x.value.conP)
+        .compareTo(y.value.aciertosConP / y.value.conP - y.value.sumaP / y.value.conP));
   return 'Apostadas cerradas: ${cerradas.length} (ganadas $gan) · apostado S/${f2(ap)} · neto '
       '${ret - ap >= 0 ? '+' : ''}S/${f2(ret - ap)} · pendientes: $pend.'
       '${peor.isNotEmpty ? '\nMercado que más falla vs lo prometido: ${peor.first.key} '
-          '(${peor.first.value[0].toInt()}/${peor.first.value[1].toInt()}).' : ''}';
+          '(${peor.first.value.aciertosConP}/${peor.first.value.conP}).' : ''}';
 }
 
 // ---------------------------------------------------------------- pantalla
@@ -632,6 +605,7 @@ class _PantallaChatState extends State<PantallaChat> {
   ];
   final ctrl = TextEditingController();
   final scroll = ScrollController();
+  Pedido? ultimo;
 
   static const sugerencias = ['3 fijas para hoy', 'cuota 2 con 80%', 'ultra segura de mañana', 'cuota 5 equilibrada',
     'solo goles, 4 partidos', '¿el bot acierta?', 'cómo voy'];
@@ -646,7 +620,8 @@ class _PantallaChatState extends State<PantallaChat> {
     if (texto.trim().isEmpty) return;
     ctrl.clear();
     setState(() => mensajes.add(Mensaje(true, texto)));
-    final r = await responder(texto);
+    final r = await responder(texto, previo: ultimo);
+    if (r.pedido != null) ultimo = r.pedido;
     setState(() => mensajes.add(r));
     await _investigar(r.investigar);
     await Future.delayed(const Duration(milliseconds: 50));
@@ -672,7 +647,19 @@ class _PantallaChatState extends State<PantallaChat> {
         return;
       }
       final a = analizar(r);
-      setState(() => mensajes.add(Mensaje(false, a.texto, lectura: r.patas.isEmpty ? null : r, monto: r.monto ?? 0)));
+      final resuelta = (r.estado == 'ganada' || r.estado == 'perdida') && r.patas.isNotEmpty;
+      setState(() => mensajes.add(Mensaje(false, a.texto, lectura: r.patas.isEmpty || resuelta ? null : r, monto: r.monto ?? 0)));
+      if (resuelta) {
+        // apuesta ya terminada: se guarda sola en el historial y se aprende de ella
+        final nueva = await guardarLectura(r);
+        final b = await Historial.cargar();
+        aprendido = Historial.porMercado(b);
+        final n = r.patas.length;
+        setState(() => mensajes.add(Mensaje(false, nueva
+            ? '📚 Guardada en tu historial como ${r.estado!.toUpperCase()}. Aprendí de $n selecciones '
+                '(mira «Aprendizaje» en Historial o en Más).'
+            : 'Esa apuesta ya estaba en tu historial: no la dupliqué.')));
+      }
       _bajar();
       await _investigar([for (final pc in r.partidos) if (pc.local.isNotEmpty && pc.visitante.isNotEmpty) (pc.local, pc.visitante)]);
     } catch (e) {

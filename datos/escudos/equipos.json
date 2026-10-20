@@ -644,5 +644,20 @@
  "Atlético Tucumán": {
   "nombre": "Atlético Tucumán",
   "intento": 1792455722.674041
+ },
+ "Wolves": {
+  "nombre": "Wolverhampton",
+  "intento": 1792466693.397109,
+  "archivo": "wolves.png"
+ },
+ "Ath Bilbao": {
+  "nombre": "Athletic Club",
+  "intento": 1792466693.397109,
+  "archivo": "ath_bilbao.png"
+ },
+ "Atl. Tucuman": {
+  "nombre": "Atlético Tucumán",
+  "intento": 1792466693.397109,
+  "archivo": "atl_tucuman.png"
  }
 }

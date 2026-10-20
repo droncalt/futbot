@@ -1,6 +1,9 @@
 // Investigación en internet en tiempo real: Google Noticias (RSS público) sobre el partido — pronósticos de
 // otros analistas, alineaciones, lesionados y suspendidos. Marca las noticias que hablan de bajas.
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Noticia {
   final String titulo, fuente, enlace;
@@ -46,7 +49,28 @@ Future<List<Noticia>> buscarNoticias(String local, String visitante, {int max = 
   out.sort((a, b) => a.baja != b.baja ? (a.baja ? -1 : 1) : (b.fecha ?? DateTime(2000)).compareTo(a.fecha ?? DateTime(2000)));
   final res = out.take(max).toList();
   _cache[clave] = (DateTime.now(), res);
+  await _anotar('$local vs $visitante', res);
   return res;
+}
+
+/// Registro de lo investigado (para la sección «Aprendizaje»): últimas 40 búsquedas.
+Future<void> _anotar(String partido, List<Noticia> ns) async {
+  try {
+    final pref = await SharedPreferences.getInstance();
+    final lista = (jsonDecode(pref.getString('investigaciones') ?? '[]') as List).cast<dynamic>();
+    lista.insert(0, {'fecha': DateTime.now().toIso8601String(), 'partido': partido, 'n': ns.length,
+      'bajas': ns.where((n) => n.baja).length, 'titulares': [for (final n in ns.take(3)) n.titulo]});
+    await pref.setString('investigaciones', jsonEncode(lista.take(40).toList()));
+  } catch (_) {}
+}
+
+Future<List<Map<String, dynamic>>> investigaciones() async {
+  try {
+    final pref = await SharedPreferences.getInstance();
+    return (jsonDecode(pref.getString('investigaciones') ?? '[]') as List).map((e) => Map<String, dynamic>.from(e)).toList();
+  } catch (_) {
+    return [];
+  }
 }
 
 const _meses = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12};

@@ -238,3 +238,119 @@ def backtest_jugadores(inicio="2025-08-01", fin_ajuste="2025-12-31", fin_tempora
     if progreso:
         progreso(1.0, "Backtest de jugadores terminado")
     return resumen
+
+
+# --- gol, asistencia y gol o asistencia (mismo modelo, otra estadística) -------------------------------
+
+GRID_EVENTOS = [MJ.Params(k, x, b, True, po) for k in (6.0, 12.0, 25.0, 50.0) for x in (0.0, 0.002)
+                for b in (0.0, 0.5) for po in (False, True)]
+
+
+def backtest_eventos(columnas=("goles", "asistencias", "ga"), inicio="2025-08-01", fin_ajuste="2025-12-31",
+                     fin_temporada="2026-06-30", fin=None, progreso=None) -> dict:
+    """Walk-forward semanal como backtest_jugadores, para P(marca gol), P(da asistencia) y P(gol o asistencia)
+    del jugador titular (escenario de Betano) y sin alineación confirmada. Elige (κ, ξ, β, dispersión) con el
+    log-loss de ago–dic 2025, estima una recalibración logística en ese mismo periodo y la adopta solo si mejora
+    log-loss y calibración de la validación (ene–jun 2026). Guarda resumen_jugadores_<columna>.json."""
+    fuente = J.fuente_activa()
+    partidos = datos.cargar_partidos()
+    ap = J.cargar_apariciones(fuente)
+    if "asistencias" not in ap.columns:
+        raise RuntimeError("La tabla de apariciones no tiene asistencias: reconstrúyela (jugadores.VERSION_APARICIONES).")
+    ap = J.con_nombres_fd(ap, partidos)
+    fin = pd.Timestamp(fin or dt.date.today())
+    semanas = list(pd.date_range(pd.Timestamp(inicio), fin, freq="7D"))
+    preds = {col: {c: {"titular": [], "sin_confirmar": []} for c in GRID_EVENTOS} for col in columnas}
+    reales = {col: [] for col in columnas}
+    tits, fechas = [], []
+    for i, t in enumerate(semanas):
+        if progreso:
+            progreso(i / len(semanas), f"Backtest gol/asistencia: semana del {t:%d/%m/%Y}")
+        prueba = ap[(ap["fecha"] >= t) & (ap["fecha"] < t + pd.Timedelta(days=7)) & (ap["grupo_pos"] != "POR")]
+        if prueba.empty:
+            continue
+        prep = MJ.Preparado(ap, t, MJ.modelos_arco(partidos, t))
+        pos = {j: n for n, j in enumerate(prep.ids)}
+        idx = prueba["jugador_id"].map(pos)
+        prueba, idx = prueba[idx.notna()], idx[idx.notna()].to_numpy(int)
+        if not len(idx):
+            continue
+        d_riv, s_h = np.zeros(len(prueba)), np.zeros(len(prueba))
+        for liga, (dmap, h) in prep.defensas.items():
+            m = (prueba["liga"] == liga).to_numpy()
+            d_riv[m] = prueba.loc[m, "rival_fd"].map(dmap).fillna(0.0).to_numpy(float)
+            s_h[m] = np.where(prueba.loc[m, "es_local"].to_numpy(bool), h / 2, -h / 2)
+        for col in columnas:
+            prep.usar(col)
+            for c in GRID_EVENTOS:
+                a, b, _ = prep.posterior(c)
+                pr = MJ.probabilidades(prep, idx, a, b, np.exp(c.beta * (d_riv + s_h)), (1,))
+                preds[col][c]["titular"].append(pr["titular"][1].astype(np.float32))
+                preds[col][c]["sin_confirmar"].append(pr["sin_confirmar"][1].astype(np.float32))
+            v = (prueba["goles"] + prueba["asistencias"]) if col == "ga" else prueba[col]
+            reales[col].append((v.to_numpy(float) >= 1).astype(float))
+        tits.append(prueba["titular"].to_numpy(bool))
+        fechas.append(prueba["fecha"].to_numpy())
+    tit, fecha = np.concatenate(tits), np.concatenate(fechas)
+    periodo = np.where(fecha <= np.datetime64(pd.Timestamp(fin_ajuste)), "ajuste",
+                       np.where(fecha <= np.datetime64(pd.Timestamp(fin_temporada)), "validacion", "actual"))
+    salida = {}
+    for col in columnas:
+        y = np.concatenate(reales[col])
+
+        def p_de(c, e):
+            return np.concatenate(preds[col][c][e]).astype(float)
+
+        def ll(c, per):
+            m = periodo == per
+            return float(np.mean([_logloss(p_de(c, "titular")[m & tit], y[m & tit]),
+                                  _logloss(p_de(c, "sin_confirmar")[m], y[m])]))
+
+        mejor = min(GRID_EVENTOS, key=lambda c: ll(c, "ajuste"))
+        coef, ll_cr, ll_rc, ece_cr, ece_rc = {"suplente|1": [0.0, 1.0]}, [], [], [], []
+        finales = {}
+        for e, filtro in (("titular", tit), ("sin_confirmar", np.ones(len(y), bool))):
+            cruda = p_de(mejor, e)
+            m = filtro & (periodo == "ajuste")
+            coef[f"{e}|1"] = _platt(cruda[m], y[m]) if m.sum() >= 200 else [0.0, 1.0]
+            rc = MJ.recalibrar(e, 1, cruda, {"usar": True, "coeficientes": coef})
+            mv = filtro & (periodo == "validacion")
+            if mv.sum():
+                ll_cr.append(_logloss(cruda[mv], y[mv]))
+                ll_rc.append(_logloss(rc[mv], y[mv]))
+                ece_cr.append(_ece(cruda[mv], y[mv])[0])
+                ece_rc.append(_ece(rc[mv], y[mv])[0])
+            finales[e] = (cruda, rc, filtro)
+        usar = bool(ll_rc) and np.mean(ll_rc) < np.mean(ll_cr) and np.mean(ece_rc) <= np.mean(ece_cr)
+        por_evento, calib, calibrado = [], {}, {}
+        for e, (cruda, rc, filtro) in finales.items():
+            p = rc if usar else cruda
+            for per in ("ajuste", "validacion", "actual"):
+                m = filtro & (periodo == per)
+                if m.sum() < 30:
+                    continue
+                ece, desvio, filas = _ece(p[m], y[m])
+                por_evento.append({"evento": f"{MJ.EVENTOS[col]} ({MJ.ESCENARIOS[e]})", "periodo": per, "n": int(m.sum()),
+                                   "prob_media": float(p[m].mean()), "frecuencia_real": float(y[m].mean()),
+                                   "logloss": _logloss(p[m], y[m]), "brier": _brier(p[m], y[m]),
+                                   "error_calibracion": ece, "mayor_desvio": desvio})
+                if per == "validacion":
+                    calib[e] = filas
+                    calibrado[e] = {"ece": ece, "mayor_desvio": desvio,
+                                    "calibrado": bool(ece <= CRITERIO["ece_max"] and desvio <= CRITERIO["desvio_max"])}
+        resumen = {"fecha": dt.date.today().isoformat(), "columna": col, "evento": MJ.EVENTOS[col], "fuente": fuente,
+                   "periodo_ajuste": f"{inicio} a {fin_ajuste}", "periodo_validacion": f"2026-01-01 a {fin_temporada}",
+                   "filas": {per: int((periodo == per).sum()) for per in ("ajuste", "validacion", "actual")},
+                   "parametros": mejor.to_dict(),
+                   "recalibracion": {"usar": bool(usar), "coeficientes": coef,
+                                     "logloss_validacion_cruda": float(np.mean(ll_cr)) if ll_cr else None,
+                                     "logloss_validacion_recalibrada": float(np.mean(ll_rc)) if ll_rc else None,
+                                     "error_calibracion_validacion_cruda": float(np.mean(ece_cr)) if ece_cr else None,
+                                     "error_calibracion_validacion_recalibrada": float(np.mean(ece_rc)) if ece_rc else None},
+                   "por_evento": por_evento, "calibracion_validacion": calib, "calibrado": calibrado, "criterio": CRITERIO}
+        MJ.ruta_resumen(col).write_text(json.dumps(resumen, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+        salida[col] = {"parametros": mejor.to_dict(), "recalibrado": bool(usar), "calibrado": calibrado,
+                       "validacion": [x for x in por_evento if x["periodo"] == "validacion"]}
+    if progreso:
+        progreso(1.0, "Backtest de gol/asistencia terminado")
+    return salida
