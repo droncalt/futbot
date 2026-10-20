@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'captura.dart';
+import 'compartir.dart';
 import 'comunes.dart';
 import 'datos.dart';
 import 'historial.dart';
@@ -132,9 +133,8 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
     return t.join('\n');
   }
 
-  Future<void> _guardar(String tipo) async {
+  Map<String, dynamic> _mapa(String tipo) {
     final r = _calcular();
-    if (r.n == 0) return;
     final ls = <Map<String, dynamic>>[];
     for (final l in lineas) {
       final e = estados[l.id]!;
@@ -145,13 +145,19 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
         'patas': [for (var i = 0; i < l.patas.length; i++) if ((e.mask >> i) & 1 == 1) {'titulo': l.patas[i].titulo, 'mercado': l.patas[i].mercado, 'sel': l.patas[i].sel}],
       });
     }
-    await Historial.guardar({
+    return {
       'id': DateTime.now().millisecondsSinceEpoch, 'fecha': DateTime.now().toIso8601String(), 'tipo': tipo,
       'monto': tipo == 'apostada' ? monto : 0, 'cuota': r.cuota, 'p': r.p, 'estado': 'pendiente', 'lineas': ls,
-    });
+    };
+  }
+
+  Future<void> _guardar(String tipo) async {
+    if (_calcular().n == 0) return;
+    final nueva = await Historial.guardar(_mapa(tipo));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(tipo == 'apostada' ? '✅ Guardada en tu historial. Se liquida sola con los resultados.'
+          content: Text(!nueva ? 'Ya tenías esta misma apuesta guardada: no la dupliqué. Mírala en «En vivo».'
+              : tipo == 'apostada' ? '✅ Guardada. La sigues en «En vivo» y se liquida sola.'
               : '👁️ Guardada en seguimiento (sin dinero).')));
     }
   }
@@ -379,10 +385,8 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
               const SizedBox(width: 6),
               IconButton.filledTonal(tooltip: 'Solo seguimiento', onPressed: r.n == 0 ? null : () => _guardar('seguimiento'),
                   icon: const Icon(Icons.visibility_outlined)),
-              IconButton.filledTonal(tooltip: 'Copiar texto', onPressed: r.n == 0 ? null : () {
-                Clipboard.setData(ClipboardData(text: _texto(r)));
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📋 Boleta copiada')));
-              }, icon: const Icon(Icons.copy)),
+              IconButton.filledTonal(tooltip: 'Compartir imagen', onPressed: r.n == 0 ? null : () => compartirBoleta(
+                  context, _mapa(monto > 0 ? 'apostada' : 'seguimiento')), icon: const Icon(Icons.share)),
               IconButton.filledTonal(tooltip: 'Abrir Betano', onPressed: () => abrir('https://www.betano.pe/sport/futbol/'),
                   icon: const Icon(Icons.open_in_new)),
             ]),

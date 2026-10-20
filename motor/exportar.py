@@ -29,11 +29,15 @@ DIR_PUBLICAR = C.RAIZ / "publicar"
 VERSION_PAQUETE = 1
 
 
+_LOGOS_ESPN: dict = {}
+
+
 def _equipo(eq: str, escudos: set) -> dict:
     d = EQ.indice().get(eq, {})
     if d.get("archivo"):
         escudos.add(d["archivo"])
-    return {"nombre": EQ.nombre(eq), "escudo": f"escudos/{d['archivo']}" if d.get("archivo") else None}
+        return {"nombre": EQ.nombre(eq), "escudo": f"escudos/{d['archivo']}"}
+    return {"nombre": EQ.nombre(eq), "escudo": _LOGOS_ESPN.get(eq)}  # URL del escudo en ESPN (copas)
 
 
 def _lineas(nivel: str, escudos: set, jugadores: bool) -> list[dict]:
@@ -43,7 +47,7 @@ def _lineas(nivel: str, escudos: set, jugadores: bool) -> list[dict]:
     for l in lineas:
         s0 = l.patas[0].seleccion
         out.append({
-            "id": l.id, "liga": l.liga, "liga_nombre": C.LIGAS.get(l.liga, l.liga), "inicio": l.inicio.isoformat(),
+            "id": l.id, "liga": l.liga, "liga_nombre": C.NOMBRES_LIGA.get(l.liga, l.liga), "inicio": l.inicio.isoformat(),
             "local": _equipo(l.local, escudos), "visitante": _equipo(l.visitante, escudos),
             "patas": [{"titulo": p.titulo, "mercado": p.mercado, "p": round(p.p, 4), "sel": p.seleccion.to_dict()}
                       | ({"alternativas": {k: round(v, 4) for k, v in p.alternativas.items()}} if p.alternativas else {})
@@ -66,7 +70,7 @@ def _partidos(escudos: set) -> list[dict]:
     hist = datos.cargar_partidos().sort_values("fecha")
     out = []
     for _, f in tp.iterrows():
-        out.append({"liga": f.liga, "liga_nombre": C.LIGAS.get(f.liga, f.liga),
+        out.append({"liga": f.liga, "liga_nombre": C.NOMBRES_LIGA.get(f.liga, f.liga),
                     "inicio": f"{f.fecha:%Y-%m-%d} {f.hora or '00:00'}",
                     "local": _equipo(f.local, escudos), "visitante": _equipo(f.visitante, escudos),
                     "goles_esperados": None if pd.isna(f.goles_esperados) else float(f.goles_esperados),
@@ -147,7 +151,25 @@ def _detalle(liga, local, visitante, w, hist) -> dict:
                 pm = float(poisson.sf(int(l), lam))
                 mer[_clave(m, "mas", l)] = round(pm, 4)
                 mer[_clave(m, "menos", l)] = round(1 - pm, 4)
-    return {"mercados": mer, "esperados": esp}
+    return {"mercados": mer, "esperados": esp, "jugadores": _jugadores(liga, local, visitante)}
+
+
+def _jugadores(liga, local, visitante, n: int = 5) -> list[dict]:
+    """Los jugadores con más probabilidad de tiro al arco (modelo con backtest, 5 grandes ligas), si es titular."""
+    if liga not in C.LIGAS_JUGADORES:
+        return []
+    try:
+        from . import modelo_jugadores as MJ
+        r = MJ.jugadores_partido(liga, local, visitante, MJ.ESCENARIO_DEFECTO, n=6)
+    except Exception:
+        return []
+    if not r.get("disponible"):
+        return []
+    filas = [{"nombre": f["jugador"], "lado": lado, "equipo": EQ.nombre(local if lado == "local" else visitante),
+              "p1": f["prob"].get("1+"), "p2": f["prob"].get("2+"), "p3": f["prob"].get("3+"),
+              "titular": f.get("titular_en_ultimas_10"), "linea_min": CB.linea_min_jugador(f["jugador"], f["prob"])}
+             for lado in ("local", "visitante") for f in r[lado] if f["prob"].get("1+")]
+    return sorted(filas, key=lambda x: -x["p1"])[:n]
 
 
 def _resultados(dias: int = 10) -> list[dict]:
@@ -166,9 +188,17 @@ def _resultados(dias: int = 10) -> list[dict]:
 
 
 def exportar(jugadores: bool = True) -> dict:
+    try:
+        from . import espn
+        _LOGOS_ESPN.update(espn.logos())
+    except Exception:
+        pass
     DIR_PUBLICAR.mkdir(exist_ok=True)
     (DIR_PUBLICAR / "escudos").mkdir(exist_ok=True)
-    EQ.resolver(list(datos.cargar_proximos().get("local", [])) + list(datos.cargar_proximos().get("visitante", [])))
+    px = datos.cargar_proximos()
+    if not px.empty:  # los equipos de copas traen el escudo de ESPN: no se buscan en TheSportsDB
+        px = px[px["liga"].isin(list(C.LIGAS))]
+        EQ.resolver(list(px.get("local", [])) + list(px.get("visitante", [])))
     escudos: set = set()
     ev = A.resumen_evaluacion()
     paquete = {

@@ -143,10 +143,17 @@ class _Partido:
         self.liga, self.local, self.visitante, self.w = liga, local, visitante, w
         self.fila = fila   # fila del partido en la lista de próximos (cuotas de referencia)
         ml = A.cargar_modelo(liga)
-        self.mod = M.MotorPartido.desde_modelo(ml, local, visitante)
         ref = A.cuotas_proximo(liga, local, visitante)
         self.ref = ref
-        self.mer = M.motor_mercado(local, visitante, ref, ml) if ref else None
+        con_modelo = bool(ml) and ml.ft.tiene(local) and ml.ft.tiene(visitante)
+        self.mer = M.motor_mercado(local, visitante, ref, ml if con_modelo else None) if ref else None
+        if con_modelo:
+            self.mod = M.MotorPartido.desde_modelo(ml, local, visitante)
+        elif self.mer is not None:  # Champions, Libertadores, equipo sin historial: solo el mercado
+            self.mod = self.mer
+            self.mod.avisos.append("Sin modelo propio para este partido: probabilidades del mercado (cuotas de DraftKings vía ESPN).")
+        else:
+            raise ValueError("sin modelo ni cuotas")
         self.r_mod = _Rejillas(self.mod)
         self.r_mer = _Rejillas(self.mer) if self.mer else None
         self._cache: dict = {}
@@ -301,10 +308,10 @@ def _generar(desde, hasta, nivel, ligas, jugadores, corners, tarjetas, max_patas
     w, _ = A.peso_modelo()
     lineas = []
     for _, f in px.iterrows():
-        ml = A.cargar_modelo(f.liga)
-        if not ml or not (ml.ft.tiene(f.local) and ml.ft.tiene(f.visitante)):
+        try:
+            pt = _Partido(f.liga, f.local, f.visitante, w, f)
+        except Exception:
             continue
-        pt = _Partido(f.liga, f.local, f.visitante, w, f)
         if pt.mer is None:
             continue  # sin cuotas de mercado no se proponen (el modelo solo es menos fiable)
         patas = _patas_partido(pt, cfg["pata"], jugadores, corners, tarjetas)

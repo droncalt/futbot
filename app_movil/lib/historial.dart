@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'compartir.dart';
 import 'comunes.dart';
 import 'datos.dart';
 import 'vivo.dart';
@@ -41,7 +42,7 @@ class Historial {
   }
 
   /// Liquida con los datos de ESPN (incluye córners, tarjetas y tiros de jugadores) y anota cada pata.
-  static Future<int> liquidarEnVivo(Map<String, Estado?> estados) async {
+  static Future<(int, int)> liquidarEnVivo(Map<String, Estado?> estados) async {
     final b = await cargar();
     var cambios = 0, anotadas = 0;
     for (final bol in b.where((x) => x['estado'] == 'pendiente')) {
@@ -53,7 +54,7 @@ class Historial {
             todas = false;
             continue;
           }
-          final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), pPrevia(Map<String, dynamic>.from(p)), e);
+          final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), pPrevia(Map<String, dynamic>.from(p), l) ?? 0.6, e);
           if (a.estado == 'ganada' || a.estado == 'perdida') {
             if (p['resultado'] != a.estado) {
               p['resultado'] = a.estado;
@@ -69,15 +70,17 @@ class Historial {
       if (perdio) {
         bol['estado'] = 'perdida';
         bol['retorno'] = 0.0;
+        bol['cerrada'] = DateTime.now().toIso8601String();
         cambios++;
       } else if (todas) {
         bol['estado'] = 'ganada';
         bol['retorno'] = (bol['monto'] as num) * (bol['cuota'] as num);
+        bol['cerrada'] = DateTime.now().toIso8601String();
         cambios++;
       }
     }
     if (cambios > 0 || anotadas > 0) await _guardarTodo(b);
-    return cambios;
+    return (cambios, anotadas);
   }
 
   /// Boletas resueltas por quién las propuso: FútBot, tú o cada tipster. → [ganadas, total, suma prob.]
@@ -89,7 +92,7 @@ class Historial {
       final v = out.putIfAbsent(nombre, () => [0, 0, 0]);
       v[0] += x['estado'] == 'ganada' ? 1 : 0;
       v[1] += 1;
-      v[2] += ((x['p'] ?? 0) as num).toDouble();
+      v[2] += ((x['p'] ?? 0) as num).toDouble(); // sin prob. conocida suma 0: se muestra «—»
     }
     return out;
   }
@@ -103,20 +106,32 @@ class Historial {
           final r = p['resultado'];
           if (r != 'ganada' && r != 'perdida') continue;
           final m = '${p['sel']?['mercado'] ?? p['mercado']}';
+          final pp = pPrevia(Map<String, dynamic>.from(p), Map<String, dynamic>.from(l));
+          if (pp == null || m == 'otro') continue; // sin probabilidad del bot no hay con qué comparar
           final v = out.putIfAbsent(m, () => [0, 0, 0]);
           v[0] += r == 'ganada' ? 1 : 0;
           v[1] += 1;
-          v[2] += pPrevia(Map<String, dynamic>.from(p));
+          v[2] += pp;
         }
       }
     }
     return out;
   }
 
-  static Future<void> guardar(Map<String, dynamic> boleta) async {
+  /// Firma de una boleta: mismos partidos y mismas patas = la misma apuesta.
+  static String firma(Map<String, dynamic> b) => (b['lineas'] as List? ?? [])
+      .map((l) => '${l['local']}|${l['visitante']}|${(l['patas'] as List? ?? []).map((p) => '${p['titulo']}·${p['sel']?['mercado']}').join('+')}')
+      .toList()
+      .join(' / ');
+
+  /// Guarda la boleta. Devuelve false si ya estaba guardada (no se duplica).
+  static Future<bool> guardar(Map<String, dynamic> boleta) async {
     final b = await cargar();
+    final f = firma(boleta);
+    if (b.any((x) => x['estado'] == 'pendiente' && firma(x) == f)) return false;
     b.insert(0, boleta);
     await _guardarTodo(b);
+    return true;
   }
 
   static Future<void> borrar(int id) async {
@@ -131,6 +146,7 @@ class Historial {
       if (x['id'] == id) {
         x['estado'] = estado;
         x['retorno'] = retorno;
+        x['cerrada'] = DateTime.now().toIso8601String();
       }
     }
     await _guardarTodo(b);
@@ -205,10 +221,12 @@ class Historial {
       if (perdio) {
         bol['estado'] = 'perdida';
         bol['retorno'] = 0.0;
+        bol['cerrada'] = DateTime.now().toIso8601String();
         cambios++;
       } else if (todas) {
         bol['estado'] = 'ganada';
         bol['retorno'] = (bol['monto'] as num) * (bol['cuota'] as num);
+        bol['cerrada'] = DateTime.now().toIso8601String();
         cambios++;
       }
     }
@@ -246,7 +264,8 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
     final neto = retorno - apostado;
     final todas = boletas.where((b) => b['estado'] == 'ganada' || b['estado'] == 'perdida').toList();
     final ganadas = todas.where((b) => b['estado'] == 'ganada').length;
-    final esperado = todas.isEmpty ? 0.0 : todas.fold<double>(0, (s, b) => s + (b['p'] as num).toDouble()) / todas.length;
+    final conP = todas.where((b) => ((b['p'] ?? 0) as num) > 0).toList();
+    final esperado = conP.isEmpty ? 0.0 : conP.fold<double>(0, (s, b) => s + (b['p'] as num).toDouble()) / conP.length;
     return RefreshIndicator(
       onRefresh: _cargar,
       child: ListView(padding: const EdgeInsets.all(12), children: [
@@ -327,7 +346,8 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
       child: ExpansionTile(
         title: Text('${(b['lineas'] as List).length} línea(s) · cuota ${f2((b['cuota'] as num).toDouble())}'
             '${b['tipo'] == 'apostada' ? ' · S/${f2((b['monto'] as num).toDouble())}' : ' · seguimiento'}'),
-        subtitle: Text('${diaHora(fecha)} · ${estado.toUpperCase()} · prob. ${pct((b['p'] as num).toDouble())}',
+        subtitle: Text('${diaHora(fecha)} · ${estado.toUpperCase()}'
+            '${((b['p'] ?? 0) as num) > 0 ? ' · prob. ${pct((b['p'] as num).toDouble())}' : ''}',
             style: TextStyle(color: color, fontWeight: FontWeight.w700)),
         children: [
           for (final l in (b['lineas'] as List))
@@ -339,10 +359,31 @@ class _PantallaHistorialState extends State<PantallaHistorial> {
             TextButton(onPressed: () async { await Historial.marcar(b['id'], 'ganada', ((b['monto'] as num) * (b['cuota'] as num)).toDouble()); _cargar(); },
                 child: const Text('Marcar ganada')),
             TextButton(onPressed: () async { await Historial.marcar(b['id'], 'perdida', 0); _cargar(); }, child: const Text('Marcar perdida')),
-            TextButton(onPressed: () async { await Historial.borrar(b['id']); _cargar(); }, child: const Text('Borrar')),
+            TextButton.icon(onPressed: () => compartirBoleta(context, b), icon: const Icon(Icons.share, size: 18),
+                label: const Text('Compartir')),
+            TextButton(onPressed: () async {
+              if (await confirmarBorrar(context)) {
+                await Historial.borrar(b['id']);
+                _cargar();
+              }
+            }, child: const Text('Borrar', style: TextStyle(color: Col.rosa))),
           ]),
         ],
       ),
     );
   }
 }
+
+Future<bool> confirmarBorrar(BuildContext context) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('¿Borrar esta apuesta?'),
+        content: const Text('Se quita de En vivo y del historial. Úsalo solo si la guardaste por error.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Borrar')),
+        ],
+      ),
+    ) ??
+    false;

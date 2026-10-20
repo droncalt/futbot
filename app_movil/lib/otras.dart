@@ -253,6 +253,24 @@ class ExtrasPartido extends StatefulWidget {
   static List<Widget> de(Map<String, dynamic> p) =>
       (p['esperados'] == null && p['mercados'] == null) ? [] : [const SizedBox(height: 6), ExtrasPartido(p)];
 
+  /// Jugadores con más probabilidad de tiro al arco (si es titular). Solo 5 grandes ligas (modelo con backtest).
+  static Widget jugadores(List js) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('👟 Tiros al arco de jugadores (si es titular)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+        const SizedBox(height: 3),
+        for (final j in js)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Row(children: [
+              Expanded(child: Text('${j['nombre']} · ${j['equipo']}', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5))),
+              if (j['p1'] != null) ChipProb((j['p1'] as num).toDouble(), sufijo: ' 1+'),
+              const SizedBox(width: 4),
+              if (j['p2'] != null) ChipProb((j['p2'] as num).toDouble(), sufijo: ' 2+'),
+            ]),
+          ),
+        if (js.any((j) => ((j['linea_min'] ?? 1) as num) > 1))
+          const Text('Betano suele ofrecer a los más tiradores desde 2+.', style: TextStyle(color: Col.suave, fontSize: 11)),
+      ]);
+
   @override
   State<ExtrasPartido> createState() => _ExtrasPartidoState();
 }
@@ -278,7 +296,10 @@ class _ExtrasPartidoState extends State<ExtrasPartido> {
     final e = Map<String, dynamic>.from(widget.p['esperados'] ?? {});
     final m = Map<String, dynamic>.from(widget.p['mercados'] ?? {});
     String x(String k) => e[k] == null ? '' : (e[k] as num).toStringAsFixed(1);
+    final js = (widget.p['jugadores'] as List? ?? []);
     final resumen = [
+      if (js.isNotEmpty && js.first['p1'] != null)
+        '👟 ${'${js.first['nombre']}'.split(' ').last} ${pct((js.first['p1'] as num).toDouble())} al arco',
       if (e['corners'] != null) '⛳ ${x('corners')} córners',
       if (e['tarjetas'] != null) '🟨 ${x('tarjetas')} tarjetas',
       if (e['tiros_arco'] != null) '🎯 ${x('tiros_arco')} al arco',
@@ -306,6 +327,7 @@ class _ExtrasPartidoState extends State<ExtrasPartido> {
                 ]),
               ]),
             ),
+      if (abierto && js.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: ExtrasPartido.jugadores(js)),
       if (abierto && e['tiros_arco'] != null)
         const Padding(padding: EdgeInsets.only(top: 4), child: Text(
             'Tiros al arco: estimación por promedios de los últimos 10 partidos (sin backtest todavía).',

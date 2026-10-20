@@ -117,6 +117,7 @@ _Renglon _limpiar(String crudo) {
     t = t.trim().substring(0, c.start);
   }
   t = t
+      .replaceFirst(RegExp(r'^\s*[oO0○◦•●]\s+(?=[A-ZÁÉÍÓÚÑa-záéíóúñ0-9])'), '')
       .replaceAll(RegExp(r'[✓✔✅©®Øø⊘ⓘ•●○◦@√]'), ' ')
       .replaceAll(RegExp(r'\(\s*\+?\d\s*\)'), ' ')
       .replaceAll(RegExp(r'\(?\bSM\b\)?'), ' ')
@@ -124,6 +125,9 @@ _Renglon _limpiar(String crudo) {
       .replaceAll(RegExp(r'(…|\.{2,})'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
+  // restos del escudo pegados al nombre: ")Francia", "D UTC De Cajamarca"
+  t = t.replaceFirst(RegExp(r'^[^\p{L}\d]+', unicode: true), '')
+      .replaceFirst(RegExp(r'^[A-Z] (?=[A-Z]{2,}|[A-Z]\p{Ll})', unicode: true), '');
   r.texto = t;
   return r;
 }
@@ -365,6 +369,8 @@ double? probPata(PataCaptura p, PartidoCaptura pc) {
   final v = mer[_clave(p.mercado, p.opcion, p.linea)];
   if (v is num) return v.toDouble();
   if (p.mercado == 'jug_arco') {
+    final j = jugadorDelPaquete(pc.paquete, p.jugador);
+    if (j != null) return (j['p${p.opcion.replaceAll('+', '')}'] as num?)?.toDouble();
     for (final nivel in ['ultra', 'segura', 'equilibrada']) {
       for (final l in repo.lineas(nivel)) {
         for (final pa in l.patas) {
@@ -487,4 +493,41 @@ Analisis analizar(LecturaCaptura r) {
         'Igual las sigo en vivo si las guardas.');
   }
   return Analisis(ops, pTotal, cuota, b.toString().trim());
+}
+
+/// Partido del paquete con esos nombres (tolera nombres cortados o abreviados).
+Map<String, dynamic>? partidoDelPaquete(String local, String visitante) {
+  Map<String, dynamic>? mejor;
+  var puntos = 1.2;
+  for (final m in repo.partidos) {
+    final l = '${m['local']?['nombre'] ?? ''}', v = '${m['visitante']?['nombre'] ?? ''}';
+    final sl = math.max(parecido(local, l), _prefijo(local, l)), sv = math.max(parecido(visitante, v), _prefijo(visitante, v));
+    if (sl >= 0.6 && sv >= 0.6 && sl + sv > puntos) {
+      puntos = sl + sv;
+      mejor = Map<String, dynamic>.from(m);
+    }
+  }
+  return mejor;
+}
+
+Map<String, dynamic>? jugadorDelPaquete(Map<String, dynamic>? partido, String nombre) {
+  for (final j in (partido?['jugadores'] as List? ?? [])) {
+    if (parecido('${j['nombre']}', nombre) > 0.6) return Map<String, dynamic>.from(j);
+  }
+  return null;
+}
+
+/// Probabilidad del bot para una pata guardada, buscada en el paquete del día (null si no la calcula).
+double? probGuardada(String local, String visitante, Map<String, dynamic> sel) {
+  final m = partidoDelPaquete(local, visitante);
+  if (m == null) return null;
+  final mer = Map<String, dynamic>.from(m['mercados'] ?? {});
+  final l = (sel['linea'] as num?)?.toDouble();
+  final v = mer[_clave('${sel['mercado']}', '${sel['opcion']}', l)];
+  if (v is num) return v.toDouble();
+  if (sel['mercado'] == 'jug_arco') {
+    final j = jugadorDelPaquete(m, '${sel['jugador_nombre'] ?? ''}');
+    return (j?['p${'${sel['opcion']}'.replaceAll('+', '')}'] as num?)?.toDouble();
+  }
+  return null;
 }

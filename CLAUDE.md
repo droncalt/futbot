@@ -56,6 +56,14 @@ No es un generador de apuestas "seguras": mide probabilidades y su calibración.
   de tipsters; aprende líneas que Betano ofrece). Jugadores: `combinador.linea_min_jugador` (capturas o
   `JUG_ARCO_1_OCULTA`), patas con `alternativas`. `datos/raw/understat` y `datos/jugadores` van en el repo (la nube
   no puede rebajarlos en 45 min).
+- `motor/espn.py` calendario + cuotas DraftKings (API pública de ESPN) de hoy a +3 días: Champions/Europa/Conference,
+  Libertadores, Sudamericana, Liga 1 Perú y las ligas del bot entre semana (football-data solo trae la jornada). Se suma
+  en `datos.cargar_proximos`; sin modelo propio → `combinador._Partido` usa solo el mercado (aviso). Línea de goles ≠ 2.5
+  se traduce a Más/Menos 2.5 equivalente (Poisson). Escudos de copas = URL de ESPN.
+- Paquete: por partido `mercados` (~143 probabilidades "mercado|opcion|linea"), `esperados` y `jugadores` (top tiros
+  al arco). App: `lectura.dart` (3 formatos reales de Betano), `compartir.dart` (boleta como imagen, share_plus),
+  `noticias.dart` (Google Noticias RSS: pronósticos y bajas), prueba de OCR por adb: imágenes en
+  `/sdcard/Android/data/pe.futbot.futbot/files/prueba_ocr/` → al abrir la app escribe `<imagen>.txt`.
 
 ## Reglas del proyecto
 

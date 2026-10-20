@@ -1,8 +1,12 @@
 // FútBot para Android: súper boletas, partidos, historial y reglas de Betano sin depender de la PC.
 import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'boleta.dart';
+import 'captura.dart';
 import 'chat.dart';
 import 'comunes.dart';
 import 'datos.dart';
@@ -64,6 +68,30 @@ class _InicioState extends State<Inicio> {
           SnackBar(content: Text('Datos guardados dañados; uso los incluidos. ($errorInicio)'))));
     }
     _autoActualizar();
+    _pruebaOcr();
+  }
+
+  /// Diagnóstico desde la PC (adb): las imágenes que se dejen en <archivos de la app>/prueba_ocr se leen con el
+  /// mismo lector de capturas y se escribe un .txt con el texto leído y la opinión del bot.
+  Future<void> _pruebaOcr() async {
+    try {
+      final base = await getExternalStorageDirectory();
+      final dir = Directory('${base?.path}/prueba_ocr');
+      if (base == null || !dir.existsSync()) return;
+      for (final f in dir.listSync().whereType<File>().where((f) => RegExp(r'\.(png|jpe?g|webp)$', caseSensitive: false).hasMatch(f.path))) {
+        final r = await leerImagen(f.path);
+        final txt = r == null ? 'sin texto' : '${r.texto}\n\n---- LECTURA ----\n${[
+          for (var i = 0; i < r.partidos.length; i++)
+            '${r.partidos[i].local} | ${r.partidos[i].visitante} | cuota ${r.partidos[i].cuota} | '
+                '${r.patas.where((p) => p.partido == i).map((p) => '${p.mercado}:${p.opcion}:${p.linea}').join(', ')}',
+        ].join('\n')}\ncuota total ${r.cuotaTotal} · monto ${r.monto}\n\n---- OPINIÓN ----\n${analizar(r).texto}';
+        await File('${f.path}.txt').writeAsString(txt);
+        await f.rename('${f.path}.hecho');
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('FutBot prueba OCR: $e');
+    }
   }
 
   Future<void> _autoActualizar() async {

@@ -325,5 +325,324 @@
  "Gil Vicente": {
   "nombre": "Gil Vicente",
   "intento": 1792338252.3615284
+ },
+ "Wolverhampton Wanderers": {
+  "nombre": "Wolverhampton Wanderers",
+  "intento": 1792455722.674041,
+  "archivo": "wolverhampton_wanderers.png"
+ },
+ "Guadalajara Chivas": {
+  "nombre": "Chivas",
+  "intento": 1792455722.674041,
+  "archivo": "guadalajara_chivas.png"
+ },
+ "Atl. San Luis": {
+  "nombre": "Atlético San Luis",
+  "intento": 1792455722.674041,
+  "archivo": "atl_san_luis.png"
+ },
+ "Juarez": {
+  "nombre": "FC Juárez",
+  "intento": 1792455722.674041,
+  "archivo": "juarez.png"
+ },
+ "Tigres UANL": {
+  "nombre": "Tigres UANL",
+  "intento": 1792455722.674041,
+  "archivo": "tigres_uanl.png"
+ },
+ "Levante": {
+  "nombre": "Levante",
+  "intento": 1792455722.674041,
+  "archivo": "levante.png"
+ },
+ "FC Cincinnati": {
+  "nombre": "FC Cincinnati",
+  "intento": 1792455722.674041,
+  "archivo": "fc_cincinnati.png"
+ },
+ "Atlante": {
+  "nombre": "Atlante",
+  "intento": 1792455722.674041,
+  "archivo": "atlante.png"
+ },
+ "Puebla": {
+  "nombre": "Puebla",
+  "intento": 1792455722.674041,
+  "archivo": "puebla.png"
+ },
+ "Toluca": {
+  "nombre": "Toluca",
+  "intento": 1792455722.674041,
+  "archivo": "toluca.png"
+ },
+ "Pachuca": {
+  "nombre": "Pachuca",
+  "intento": 1792455722.674041,
+  "archivo": "pachuca.png"
+ },
+ "Santos Laguna": {
+  "nombre": "Santos Laguna",
+  "intento": 1792455722.674041,
+  "archivo": "santos_laguna.png"
+ },
+ "Darmstadt": {
+  "nombre": "Darmstadt",
+  "intento": 1792455722.674041,
+  "archivo": "darmstadt.png"
+ },
+ "Bochum": {
+  "nombre": "Bochum",
+  "intento": 1792455722.674041,
+  "archivo": "bochum.png"
+ },
+ "Randers FC": {
+  "nombre": "Randers FC",
+  "intento": 1792455722.674041,
+  "archivo": "randers_fc.png"
+ },
+ "Elfsborg": {
+  "nombre": "Elfsborg",
+  "intento": 1792455722.674041,
+  "archivo": "elfsborg.png"
+ },
+ "Vasteras SK": {
+  "nombre": "Vasteras SK",
+  "intento": 1792455722.674041,
+  "archivo": "vasteras_sk.png"
+ },
+ "Alanyaspor": {
+  "nombre": "Alanyaspor",
+  "intento": 1792455722.674041,
+  "archivo": "alanyaspor.png"
+ },
+ "Altach": {
+  "nombre": "Altach",
+  "intento": 1792455722.674041,
+  "archivo": "altach.png"
+ },
+ "Nancy": {
+  "nombre": "Nancy",
+  "intento": 1792455722.674041,
+  "archivo": "nancy.png"
+ },
+ "Clermont": {
+  "nombre": "Clermont",
+  "intento": 1792455722.674041,
+  "archivo": "clermont.png"
+ },
+ "Dunkerque": {
+  "nombre": "Dunkerque",
+  "intento": 1792455722.674041,
+  "archivo": "dunkerque.png"
+ },
+ "Pau FC": {
+  "nombre": "Pau FC",
+  "intento": 1792455722.674041,
+  "archivo": "pau_fc.png"
+ },
+ "Go Ahead Eagles": {
+  "nombre": "Go Ahead Eagles",
+  "intento": 1792455722.674041,
+  "archivo": "go_ahead_eagles.png"
+ },
+ "Stuttgart": {
+  "nombre": "Stuttgart",
+  "intento": 1792455722.674041
+ },
+ "Empoli": {
+  "nombre": "Empoli",
+  "intento": 1792455722.674041
+ },
+ "Kortrijk": {
+  "nombre": "Kortrijk",
+  "intento": 1792455722.674041,
+  "archivo": "kortrijk.png"
+ },
+ "Brest": {
+  "nombre": "Brest",
+  "intento": 1792455722.674041,
+  "archivo": "brest.png"
+ },
+ "Ipswich": {
+  "nombre": "Ipswich Town",
+  "intento": 1792455722.674041,
+  "archivo": "ipswich.png"
+ },
+ "Bolton": {
+  "nombre": "Bolton",
+  "intento": 1792455722.674041,
+  "archivo": "bolton.png"
+ },
+ "Guimaraes": {
+  "nombre": "Vitória Guimarães",
+  "intento": 1792455722.674041,
+  "archivo": "guimaraes.png"
+ },
+ "Gimnasia Mendoza": {
+  "nombre": "Gimnasia Mendoza",
+  "intento": 1792455722.674041,
+  "archivo": "gimnasia_mendoza.png"
+ },
+ "Cruzeiro": {
+  "nombre": "Cruzeiro",
+  "intento": 1792455722.674041,
+  "archivo": "cruzeiro.png"
+ },
+ "Tigre": {
+  "nombre": "Tigre",
+  "intento": 1792455722.674041,
+  "archivo": "tigre.png"
+ },
+ "Portsmouth": {
+  "nombre": "Portsmouth",
+  "intento": 1792455722.674041,
+  "archivo": "portsmouth.png"
+ },
+ "Necaxa": {
+  "nombre": "Necaxa",
+  "intento": 1792455722.674041,
+  "archivo": "necaxa.png"
+ },
+ "Queretaro": {
+  "nombre": "Querétaro",
+  "intento": 1792455722.674041,
+  "archivo": "queretaro.png"
+ },
+ "Club Leon": {
+  "nombre": "León",
+  "intento": 1792455722.674041,
+  "archivo": "club_leon.png"
+ },
+ "Athletic Club": {
+  "nombre": "Athletic Club-MG",
+  "intento": 1792455722.674041,
+  "archivo": "athletic_club.png"
+ },
+ "D.C. United": {
+  "nombre": "DC United",
+  "intento": 1792455722.674041,
+  "archivo": "dc_united.png"
+ },
+ "Club America": {
+  "nombre": "América",
+  "intento": 1792455722.674041,
+  "archivo": "club_america.png"
+ },
+ "Monterrey": {
+  "nombre": "Monterrey",
+  "intento": 1792455722.674041,
+  "archivo": "monterrey.png"
+ },
+ "Club Tijuana": {
+  "nombre": "Tijuana",
+  "intento": 1792455722.674041,
+  "archivo": "club_tijuana.png"
+ },
+ "Cruz Azul": {
+  "nombre": "Cruz Azul",
+  "intento": 1792455722.674041,
+  "archivo": "cruz_azul.png"
+ },
+ "UNAM Pumas": {
+  "nombre": "Pumas UNAM",
+  "intento": 1792455722.674041,
+  "archivo": "unam_pumas.png"
+ },
+ "St Pauli": {
+  "nombre": "St. Pauli",
+  "intento": 1792455722.674041,
+  "archivo": "st_pauli.png"
+ },
+ "Wolfsburg": {
+  "nombre": "Wolfsburg",
+  "intento": 1792455722.674041,
+  "archivo": "wolfsburg.png"
+ },
+ "Brøndby IF": {
+  "nombre": "Brøndby IF",
+  "intento": 1792455722.674041,
+  "archivo": "brndby_if.png"
+ },
+ "Malmo FF": {
+  "nombre": "Malmo FF",
+  "intento": 1792455722.674041,
+  "archivo": "malmo_ff.png"
+ },
+ "Halmstad": {
+  "nombre": "Halmstad",
+  "intento": 1792455722.674041
+ },
+ "Kocaelispor": {
+  "nombre": "Kocaelispor",
+  "intento": 1792455722.674041,
+  "archivo": "kocaelispor.png"
+ },
+ "Austria Vienna": {
+  "nombre": "Austria Vienna",
+  "intento": 1792455722.674041,
+  "archivo": "austria_vienna.png"
+ },
+ "Laval": {
+  "nombre": "Laval",
+  "intento": 1792455722.674041,
+  "archivo": "laval.png"
+ },
+ "Guingamp": {
+  "nombre": "Guingamp",
+  "intento": 1792455722.674041,
+  "archivo": "guingamp.png"
+ },
+ "Metz": {
+  "nombre": "Metz",
+  "intento": 1792455722.674041,
+  "archivo": "metz.png"
+ },
+ "Grenoble": {
+  "nombre": "Grenoble",
+  "intento": 1792455722.674041,
+  "archivo": "grenoble.png"
+ },
+ "Telstar": {
+  "nombre": "Telstar",
+  "intento": 1792455722.674041,
+  "archivo": "telstar.png"
+ },
+ "Borussia Mönchengladbach": {
+  "nombre": "Borussia Mönchengladbach",
+  "intento": 1792455722.674041,
+  "archivo": "borussia_monchengladbach.png"
+ },
+ "Vicenza": {
+  "nombre": "Vicenza",
+  "intento": 1792455722.674041,
+  "archivo": "vicenza.png"
+ },
+ "Mechelen": {
+  "nombre": "Mechelen",
+  "intento": 1792455722.674041,
+  "archivo": "mechelen.png"
+ },
+ "Middlesbrough": {
+  "nombre": "Middlesbrough",
+  "intento": 1792455722.674041,
+  "archivo": "middlesbrough.png"
+ },
+ "Maritimo": {
+  "nombre": "Marítimo",
+  "intento": 1792455722.674041,
+  "archivo": "maritimo.png"
+ },
+ "Platense": {
+  "nombre": "Platense",
+  "intento": 1792455722.674041
+ },
+ "Remo": {
+  "nombre": "Remo",
+  "intento": 1792455722.674041
+ },
+ "Atlético Tucumán": {
+  "nombre": "Atlético Tucumán",
+  "intento": 1792455722.674041
  }
 }

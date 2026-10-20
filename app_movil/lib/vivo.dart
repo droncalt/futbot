@@ -9,7 +9,9 @@ import 'package:http/http.dart' as http;
 
 import 'comunes.dart';
 import 'datos.dart';
+import 'compartir.dart';
 import 'historial.dart';
+import 'lectura.dart' show probGuardada;
 
 const _espn = 'https://site.api.espn.com/apis/site/v2/sports/soccer/';
 
@@ -376,13 +378,27 @@ Map<String, double> _probPartido(Estado e) {
   return {};
 }
 
-/// Probabilidad previa de una pata guardada: la del bot o, si viene de una captura, la que implica su cuota.
-double pPrevia(Map<String, dynamic> pata) {
+/// Probabilidad previa de una pata guardada: la del bot; si no la trae (capturas), la del paquete del día para ese
+/// partido y mercado; si es una simple con cuota, la que implica la cuota. null = el bot no la calcula
+/// (antes se ponía 60% "por defecto" y eso hundía el total a casi 0%).
+double? pPrevia(Map<String, dynamic> pata, [Map<String, dynamic>? linea]) {
   final p = (pata['p'] as num?)?.toDouble();
   if (p != null && p > 0) return p;
+  if (linea != null) {
+    final g = probGuardada('${linea['local']}', '${linea['visitante']}', Map<String, dynamic>.from(pata['sel'] ?? {}));
+    if (g != null) return g;
+  }
   final c = (pata['cuota'] as num?)?.toDouble();
-  if (c != null && c > 1) return (0.94 / c).clamp(0.02, 0.98);
-  return 0.6;
+  if (c != null && c > 1) return (0.94 / c).clamp(0.02, 0.98).toDouble();
+  return null;
+}
+
+/// "85% × 74% × 72% = 45%": la probabilidad de acertar TODO es el producto (hay que acertar cada una).
+String explicarProducto(List<double> ps) {
+  if (ps.length < 2) return '';
+  final total = ps.fold<double>(1, (a, b) => a * b);
+  final partes = ps.length <= 6 ? ps.map(pct).join(' × ') : '${ps.take(5).map(pct).join(' × ')} × …';
+  return 'Hay que acertar todas: $partes = ${pct(total)}';
 }
 
 // ---------------------------------------------------------------- pantalla
@@ -393,11 +409,12 @@ class PantallaVivo extends StatefulWidget {
 }
 
 class _PantallaVivoState extends State<PantallaVivo> {
-  List<Map<String, dynamic>> boletas = [];
+  List<Map<String, dynamic>> pendientes = [], terminadas = [];
   final estados = <String, Estado?>{}; // clave línea → estado
   Timer? reloj;
   bool cargando = true;
   String? aviso;
+  int aprendidasTotal = 0;
 
   @override
   void initState() {
@@ -414,39 +431,56 @@ class _PantallaVivoState extends State<PantallaVivo> {
 
   static String claveLinea(Map l) => '${l['local']}|${l['visitante']}|${l['inicio']}';
 
+  static bool _reciente(Map<String, dynamic> b) {
+    final c = DateTime.tryParse('${b['cerrada'] ?? b['fecha']}');
+    return c != null && DateTime.now().difference(c).inDays < 3;
+  }
+
   Future<void> _refrescar() async {
-    final b = (await Historial.cargar()).where((x) => x['estado'] == 'pendiente').toList();
+    var todas = await Historial.cargar();
     final ahora = DateTime.now();
     var fallos = 0;
-    for (final bol in b) {
+    final seguir = todas.where((x) => x['estado'] == 'pendiente' || _reciente(x)).toList();
+    for (final bol in seguir) {
       for (final l in (bol['lineas'] as List)) {
         final ini = DateTime.tryParse('${l['inicio']}') ?? ahora;
         final k = claveLinea(l);
         final previo = estados[k];
-        // antes del partido basta con revisar cada pocos minutos; terminado ya no se vuelve a pedir
+        // terminado ya no se vuelve a pedir; antes del partido basta con mirar cada pocos minutos
         if (previo != null && previo.terminado) continue;
         if (previo == null && ini.difference(ahora).inMinutes > 20 && estados.containsKey(k)) continue;
+        if (bol['estado'] != 'pendiente' && estados.containsKey(k)) continue;
         final id = await Espn.buscar('${l['liga'] ?? ''}', '${l['local']}', '${l['visitante']}', ini);
         if (id == null) {
           estados[k] = null;
-          fallos++;
+          if (bol['estado'] == 'pendiente') fallos++;
           continue;
         }
         estados[k] = await Espn.estado(id);
       }
     }
-    final liquidadas = await Historial.liquidarEnVivo(estados);
+    final (liquidadas, aprendidas) = await Historial.liquidarEnVivo(estados);
+    if (liquidadas > 0 || aprendidas > 0) todas = await Historial.cargar();
     if (!mounted) return;
     setState(() {
-      boletas = b;
+      aprendidasTotal += aprendidas;
+      pendientes = todas.where((x) => x['estado'] == 'pendiente').toList();
+      terminadas = todas.where((x) => x['estado'] != 'pendiente' && _reciente(x)).toList()
+        ..sort((a, b) => '${b['cerrada'] ?? b['fecha']}'.compareTo('${a['cerrada'] ?? a['fecha']}'));
       cargando = false;
-      aviso = liquidadas > 0 ? '✅ $liquidadas boleta(s) liquidada(s) con el resultado final.'
-          : fallos > 0 ? 'Algunos partidos aún no aparecen en ESPN (se reintenta solo).' : null;
+      aviso = [
+        if (liquidadas > 0) '🏁 $liquidadas boleta(s) terminada(s): mira abajo en «Terminadas».',
+        if (aprendidas > 0) '📚 Aprendí de $aprendidas resultado(s) nuevo(s): ya ajustan las probabilidades del chat.',
+        if (fallos > 0) 'Algunos partidos aún no aparecen en ESPN (se reintenta solo).',
+      ].join('\n');
+      if (aviso!.isEmpty) aviso = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final apostadas = pendientes.where((b) => b['tipo'] == 'apostada').toList();
+    final seguimiento = pendientes.where((b) => b['tipo'] != 'apostada').toList();
     return RefreshIndicator(
       onRefresh: _refrescar,
       child: ListView(padding: const EdgeInsets.all(12), children: [
@@ -454,41 +488,90 @@ class _PantallaVivoState extends State<PantallaVivo> {
           Expanded(child: Text('En vivo', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800))),
           const Text('se actualiza cada minuto', style: TextStyle(color: Col.suave, fontSize: 12)),
         ]),
-        const Text('Tus boletas pendientes (apostadas, de seguimiento o leídas de capturas). Datos: ESPN.',
+        const Text('Tus apuestas y las que sigues, con estadísticas en tiempo real (ESPN). Lo que apostaste va resaltado.',
             style: TextStyle(color: Col.suave)),
         if (aviso != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(aviso!, style: const TextStyle(color: Col.naranja))),
         const SizedBox(height: 8),
         if (cargando) const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator())),
-        if (!cargando && boletas.isEmpty)
-          const Text('No tienes boletas pendientes. Guarda una en la Súper boleta («La aposté» o 👁️) o sube una captura '
-              'en «Capturas».', style: TextStyle(color: Col.suave)),
-        for (final b in boletas) _boleta(b),
+        if (!cargando && pendientes.isEmpty && terminadas.isEmpty)
+          const Text('No tienes apuestas en curso. Guarda una en la Súper boleta o en el Chat («La aposté» o «Solo seguir»), '
+              'o mándale una captura al Chat.', style: TextStyle(color: Col.suave)),
+        if (apostadas.isNotEmpty) _seccion('💰 Apostadas', apostadas.length),
+        for (final b in apostadas) _boleta(b),
+        if (seguimiento.isNotEmpty) _seccion('👁️ En seguimiento (sin dinero)', seguimiento.length),
+        for (final b in seguimiento) _boleta(b),
+        if (terminadas.isNotEmpty) _seccion('🏁 Terminadas (últimos 3 días · todas quedan en Historial)', terminadas.length),
+        for (final b in terminadas) _boleta(b),
       ]),
     );
   }
 
+  Widget _seccion(String t, int n) => Padding(
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
+        child: Text('$t · $n', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Col.naranja)),
+      );
+
+  String _quien(Map<String, dynamic> b) {
+    final a = '${b['autor'] ?? ''}';
+    if (a.startsWith('tipster:')) return '📣 ${a.substring(8)}';
+    if (b['origen'] == 'captura') return '📷 Tu captura';
+    if (b['origen'] == 'chat') return '💬 Del chat';
+    return '🤖 Súper boleta';
+  }
+
   Widget _boleta(Map<String, dynamic> b) {
     final ls = (b['lineas'] as List);
-    var pTotal = 1.0;
+    final previas = <double>[];
+    double? ahora = 1.0;
     final filas = <Widget>[];
     for (final l in ls) {
+      final lm = Map<String, dynamic>.from(l);
       final e = estados[claveLinea(l)];
-      filas.add(_linea(Map<String, dynamic>.from(l), e, (p) => pTotal *= p));
+      filas.add(_linea(lm, e, (pv, pa) {
+        if (pa != null) previas.add(pa);
+        ahora = (ahora == null || pv == null) ? null : ahora! * pv;
+      }));
     }
-    final tipo = b['tipo'] == 'apostada' ? 'S/${f2((b['monto'] as num).toDouble())} · ' : b['origen'] == 'captura' ? '📷 ' : '👁️ ';
+    final estado = '${b['estado']}';
+    final terminada = estado != 'pendiente';
+    final monto = (b['monto'] as num?)?.toDouble() ?? 0;
+    final cuota = (b['cuota'] as num?)?.toDouble() ?? 1;
+    final pAntes = previas.length == ls.fold<int>(0, (n, l) => n + (l['patas'] as List).length) && previas.isNotEmpty
+        ? previas.fold<double>(1, (a, x) => a * x) : null;
     return Card(
       color: Col.tarjeta,
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(
+          color: estado == 'ganada' ? const Color(0xFF34D399) : estado == 'perdida' ? Col.rosa : Col.borde, width: terminada ? 1.5 : 1)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Expanded(child: Text('$tipo${ls.length} partido(s) · cuota ${f2((b['cuota'] as num).toDouble())}',
-                style: const TextStyle(fontWeight: FontWeight.w800))),
-            ChipProb(pTotal),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${b['tipo'] == 'apostada' ? 'S/${f2(monto)} → S/${f2(monto * cuota)} · ' : ''}'
+                  '${ls.length} partido(s) · cuota ${f2(cuota)}', style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text('${_quien(b)} · ${diaHora(DateTime.tryParse('${b['fecha']}') ?? DateTime.now())}',
+                  style: const TextStyle(color: Col.suave, fontSize: 12)),
+            ])),
+            if (terminada)
+              Text(estado == 'ganada' ? '✅ GANADA' : '❌ PERDIDA',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: estado == 'ganada' ? const Color(0xFF34D399) : Col.rosa))
+            else if (ahora != null)
+              ChipProb(ahora!, sufijo: ' ahora'),
+            IconButton(tooltip: 'Compartir imagen', icon: const Icon(Icons.share, size: 20), onPressed: () => compartirBoleta(context, b)),
+            IconButton(tooltip: 'Borrar', icon: const Icon(Icons.delete_outline, size: 20, color: Col.rosa), onPressed: () async {
+              if (await confirmarBorrar(context)) {
+                await Historial.borrar(b['id']);
+                _refrescar();
+              }
+            }),
           ]),
-          Text('Prob. de acertar todo ahora (aprox.) · antes: ${pct((b['p'] as num?)?.toDouble() ?? 0)}',
-              style: const TextStyle(color: Col.suave, fontSize: 12)),
+          if (pAntes != null)
+            Text('${explicarProducto(previas)}${previas.length < 2 ? 'Prob. antes del partido: ${pct(pAntes)}' : ''}',
+                style: const TextStyle(color: Col.suave, fontSize: 12)),
+          if (pAntes == null && !terminada)
+            const Text('Alguna selección no la calcula el bot (otra liga o mercado): igual la sigo en vivo.',
+                style: TextStyle(color: Col.suave, fontSize: 12)),
           const Divider(),
           ...filas,
         ]),
@@ -496,9 +579,9 @@ class _PantallaVivoState extends State<PantallaVivo> {
     );
   }
 
-  Widget _linea(Map<String, dynamic> l, Estado? e, void Function(double) acumular) {
+  Widget _linea(Map<String, dynamic> l, Estado? e, void Function(double?, double?) acumular) {
     final cab = e == null
-        ? 'Buscando en ESPN… · ${diaHora(DateTime.parse(l['inicio']))}'
+        ? 'Buscando en ESPN… · ${diaHora(DateTime.tryParse('${l['inicio']}') ?? DateTime.now())}'
         : e.estado == 'pre'
             ? 'Empieza ${e.inicio != null ? diaHora(e.inicio!) : ''}'
             : '${e.nl} ${e.gl} - ${e.gv} ${e.nv} · ${e.terminado ? 'Final' : e.reloj}';
@@ -510,18 +593,21 @@ class _PantallaVivoState extends State<PantallaVivo> {
           Text('${l['local']} vs ${l['visitante']}', style: const TextStyle(fontWeight: FontWeight.w700)),
           Text(cab, style: TextStyle(color: e?.enJuego == true ? const Color(0xFF34D399) : Col.suave, fontSize: 13,
               fontWeight: e?.enJuego == true ? FontWeight.w800 : FontWeight.normal)),
-          for (final p in (l['patas'] as List)) _pata(Map<String, dynamic>.from(p), e, acumular),
+          for (final p in (l['patas'] as List)) _pata(Map<String, dynamic>.from(p), l, e, acumular),
           if (e != null) const Text('Toca para ver todas las estadísticas ›', style: TextStyle(color: Col.naranja, fontSize: 12)),
         ]),
       ),
     );
   }
 
-  Widget _pata(Map<String, dynamic> p, Estado? e, void Function(double) acumular) {
-    final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), pPrevia(p), e);
-    acumular(a.pVivo ?? pPrevia(p));
-    final color = a.estado == 'ganada' ? const Color(0xFF34D399) : a.estado == 'perdida' ? Col.rosa : Col.texto;
-    final icono = a.estado == 'ganada' ? '✅' : a.estado == 'perdida' ? '❌' : a.estado == 'en juego' ? '⏱️' : '•';
+  Widget _pata(Map<String, dynamic> p, Map<String, dynamic> l, Estado? e, void Function(double?, double?) acumular) {
+    final antes = pPrevia(p, l);
+    final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), antes ?? 0.6, e);
+    final res = p['resultado'] ?? (a.estado == 'ganada' || a.estado == 'perdida' ? a.estado : null);
+    final pv = res == 'ganada' ? 1.0 : res == 'perdida' ? 0.0 : (antes == null ? null : (a.pVivo ?? antes));
+    acumular(pv, antes);
+    final color = res == 'ganada' ? const Color(0xFF34D399) : res == 'perdida' ? Col.rosa : Col.texto;
+    final icono = res == 'ganada' ? '✅' : res == 'perdida' ? '❌' : a.estado == 'en juego' ? '⏱️' : '•';
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.all(8),
@@ -534,7 +620,7 @@ class _PantallaVivoState extends State<PantallaVivo> {
           Text('${p['titulo']} · ${p['mercado']}', style: TextStyle(fontWeight: FontWeight.w800, color: color)),
           Text(a.texto, style: const TextStyle(color: Col.suave, fontSize: 12.5)),
         ])),
-        if (a.pVivo != null && a.estado != 'ganada' && a.estado != 'perdida') ChipProb(a.pVivo!),
+        if (res == null && pv != null) ChipProb(pv),
       ]),
     );
   }
@@ -582,7 +668,7 @@ class DetallePartido extends StatelessWidget {
           const Text('Lo que marcó el bot', style: TextStyle(fontWeight: FontWeight.w800, color: Col.naranja)),
         for (final p in (linea['patas'] as List))
           Builder(builder: (_) {
-            final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), pPrevia(Map<String, dynamic>.from(p)), e);
+            final a = evaluar(Map<String, dynamic>.from(p['sel'] ?? {}), pPrevia(Map<String, dynamic>.from(p), linea) ?? 0.6, e);
             return ListTile(dense: true, title: Text('${p['titulo']} · ${p['mercado']}'), subtitle: Text(a.texto),
                 trailing: Text(a.estado == 'ganada' ? '✅' : a.estado == 'perdida' ? '❌' : a.pVivo != null ? pct(a.pVivo!) : ''));
           }),

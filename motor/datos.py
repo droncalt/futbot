@@ -126,6 +126,14 @@ def actualizar(forzar: bool = False, progreso=None) -> pd.DataFrame:
         _, cambio, estado = descargar(nombre, url)
         filas.append({"archivo": nombre, "estado": estado, "cambio": cambio})
         time.sleep(0.4)  # ser respetuosos con el servidor gratuito
+    try:  # calendario y cuotas de ESPN: Champions, Libertadores, Liga 1 y partidos entre semana
+        from . import espn
+        if progreso:
+            progreso(0.99, "Calendario y cuotas de ESPN…")
+        n = len(espn.descargar())
+        filas.append({"archivo": "espn_proximos", "estado": f"{n} partidos", "cambio": n > 0})
+    except Exception as e:
+        filas.append({"archivo": "espn_proximos", "estado": f"error {type(e).__name__}", "cambio": False})
     if progreso:
         progreso(1.0, "Descarga terminada")
     cargar_partidos.cache_clear()
@@ -231,10 +239,10 @@ def cargar_proximos() -> pd.DataFrame:
     """Partidos próximos (ligas europeas) con cuotas del momento."""
     ruta = ultimo_snapshot("proximos")
     if ruta is None:
-        return pd.DataFrame()
+        return _con_espn(pd.DataFrame())
     raw = _leer_csv(ruta)
     if "HomeTeam" not in raw.columns:
-        return pd.DataFrame()
+        return _con_espn(pd.DataFrame())
     out = pd.DataFrame({
         "liga": raw["Div"], "fecha": _fechas(raw["Date"]), "hora": raw.get("Time"),
         "local": raw["HomeTeam"].astype(str).str.strip(),
@@ -253,7 +261,21 @@ def cargar_proximos() -> pd.DataFrame:
     ahora = pd.Timestamp.now(tz=C.ZONA_HORARIA).tz_localize(None)
     out = out[out["inicio"].isna() | (out["inicio"] >= ahora - pd.Timedelta(hours=2))]
     out["fuente_consulta"] = ruta.stem
-    return out.sort_values(["inicio", "liga"]).reset_index(drop=True)
+    return _con_espn(out).sort_values(["inicio", "liga"]).reset_index(drop=True)
+
+
+def _con_espn(out: pd.DataFrame) -> pd.DataFrame:
+    """Suma los partidos de ESPN que football-data no trae (mismo partido = misma liga, equipos y día)."""
+    try:
+        from . import espn
+        e = espn.cargar()
+    except Exception:
+        return out
+    if e.empty:
+        return out
+    ya = set(zip(out["liga"], out["local"], out["visitante"], out["fecha"].dt.date)) if not out.empty else set()
+    e = e[[(f.liga, f.local, f.visitante, f.fecha.date()) not in ya for f in e.itertuples()]]
+    return pd.concat([out, e], ignore_index=True) if not out.empty else e
 
 
 def cuotas_sanas(*cuotas, minimo: float = 0.97, maximo: float = 1.20) -> bool:

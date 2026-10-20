@@ -154,7 +154,7 @@ class Repositorio {
   Map<String, dynamic> get niveles => Map<String, dynamic>.from(paquete['niveles'] ?? {});
 
   /// Dirección del escudo: en la nube si hay URL; si no, la copia incluida en la app.
-  String? escudo(String? rel) => rel == null ? null : (urlBase.isEmpty ? 'asset:$rel' : '$urlBase$rel');
+  String? escudo(String? rel) => rel == null ? null : rel.startsWith('http') ? rel : (urlBase.isEmpty ? 'asset:$rel' : '$urlBase$rel');
 }
 
 final repo = Repositorio();

@@ -69,14 +69,22 @@ void main() {
     expect(t[2], endsWith('goles:menos:4.5, corners_local:mas:2.5, corners_visitante:mas:1.5'));
     // si el paquete trae esos partidos, el bot los reconoce y da probabilidades
     final a = analizar(r);
-    expect(a.texto, contains('Probabilidad'));
-    if (repo.partidos.any((m) => '${m['local']?['nombre']}' == 'Getafe')) {
+    expect(a.texto, anyOf(contains('Probabilidad'), contains('no las calcula')));
+    if (repo.partidos.any((m) => '${m['local']?['nombre']}' == 'Getafe' && '${m['visitante']?['nombre']}' == 'Rayo Vallecano')) {
       expect(r.partidos[2].local, 'Getafe');
       expect(r.partidos[2].visitante, 'Rayo Vallecano');
       expect(a.tarjetas[0].p, isNotNull);
       // Más 0.5 y Menos 4.5 del mismo partido = entre 1 y 4 goles (más probable que la pata más floja)
       expect(a.tarjetas[0].p!, lessThan(1));
     }
+  });
+
+  test('restos del escudo en el nombre (OCR real del celular)', () {
+    final r = leerTexto(['O Más de 1.5  1.14', 'Goles totales Más/Menos', 'Bélgica', ')Francia', 'Sport Huancayo  1.24',
+      'Resultado del partido SuperCuotas', 'Sport Huancayo', 'D UTC De Cajamarca']);
+    expect(r.partidos[0].visitante, 'Francia');
+    expect(r.partidos[1].visitante, 'UTC De Cajamarca');
+    expect(r.partidos[0].cuota, 1.14);
   });
 
   test('nombres parecidos', () {

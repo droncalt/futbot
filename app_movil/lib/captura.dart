@@ -51,7 +51,7 @@ Future<LecturaCaptura?> elegirYLeer(ImageSource origen) async {
 }
 
 /// Guarda la combinada leída en el historial para seguirla en vivo y liquidarla sola.
-Future<void> guardarLectura(LecturaCaptura r, {double? monto, String autor = 'yo', double? cuotaManual}) async {
+Future<bool> guardarLectura(LecturaCaptura r, {double? monto, String autor = 'yo', double? cuotaManual}) async {
   final a = analizar(r);
   final ls = <Map<String, dynamic>>[];
   for (final o in a.tarjetas) {
@@ -67,10 +67,10 @@ Future<void> guardarLectura(LecturaCaptura r, {double? monto, String autor = 'yo
     });
   }
   final m = monto ?? r.monto ?? 0;
-  await Historial.guardar({
+  return Historial.guardar({
     'id': DateTime.now().millisecondsSinceEpoch, 'fecha': DateTime.now().toIso8601String(),
     'tipo': m > 0 ? 'apostada' : 'seguimiento', 'origen': 'captura', 'autor': autor, 'monto': m,
-    'cuota': cuotaManual ?? a.cuota ?? 1.0, 'p': a.pTotal ?? 0.0, 'estado': 'pendiente', 'lineas': ls,
+    'cuota': cuotaManual ?? a.cuota ?? 1.0, if (a.pTotal != null) 'p': a.pTotal, 'estado': 'pendiente', 'lineas': ls,
   });
 }
 

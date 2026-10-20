@@ -56,6 +56,13 @@ LIGAS_EXTRA = {
 }
 
 LIGAS = {**LIGAS_EUROPA, **LIGAS_EXTRA}
+
+# Copas y ligas que solo llegan por ESPN (motor/espn.py): sin modelo propio, solo modelo de mercado (DraftKings).
+LIGAS_COPAS = {
+    "UCL": "UEFA Champions League", "UEL": "UEFA Europa League", "UECL": "UEFA Conference League",
+    "LIB": "Copa Libertadores", "SUD": "Copa Sudamericana", "PER": "Perú - Liga 1",
+}
+NOMBRES_LIGA = {**LIGAS, **LIGAS_COPAS}
 OTRA_COMPETICION = "OTRA"  # Champions, Europa League, selecciones, etc.: solo modelo de mercado
 
 # --- Parámetros del modelo (versión 1) ---

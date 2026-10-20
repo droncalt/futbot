@@ -9,9 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'captura.dart';
+import 'compartir.dart';
 import 'comunes.dart';
 import 'datos.dart';
 import 'historial.dart';
+import 'noticias.dart';
 import 'vivo.dart';
 
 // ---------------------------------------------------------------- lo que pide el usuario
@@ -22,7 +24,9 @@ class Pedido {
   final familias = <String>{}; // goles, corners, tarjetas, jugadores, resultado
   final sinFamilias = <String>{};
   final equipos = <String>{}, ligas = <String>{};
-  bool get vacio => nivel == null && cuota == null && pMin == null && n == null && familias.isEmpty && equipos.isEmpty && ligas.isEmpty && dia == null;
+  final tipos = <String>{}; // prefijos "mercado|opcion|linea": btts|si, doble|, goles|mas|2.5, jug_arco|
+  bool get vacio => nivel == null && cuota == null && pMin == null && n == null && familias.isEmpty && equipos.isEmpty &&
+      ligas.isEmpty && dia == null && tipos.isEmpty;
 }
 
 const _numeros = {'una': 1, 'un': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10};
@@ -73,6 +77,13 @@ Pedido entender(String texto) {
   fam('jugadores', r'jugador|tiros|remate|arco|puerta');
   fam('goles', r'goles|gol |over|under|mas de|menos de|ambos');
   fam('resultado', r'doble oportunidad|ganador|resultado|gana |empate');
+  if (RegExp(r'ambos (equipos )?(anotan|marcan)|btts').hasMatch(t)) p.tipos.add(t.contains(' no ambos') ? 'btts|no' : 'btts|si');
+  if (t.contains('doble oportunidad')) p.tipos.add('doble|');
+  for (final m in RegExp(r'(m[aá]s|menos|over|under) (?:de )?(\d)[.,]5(?! ?(?:c[oó]rner|tarjeta))').allMatches(crudo)) {
+    final mas = m.group(1)!.startsWith('m') && m.group(1) != 'menos' || m.group(1) == 'over';
+    p.tipos.add('goles|${mas ? 'mas' : 'menos'}|${m.group(2)}.5');
+  }
+  if (RegExp(r'tiros? al arco|remates?|tiros? a puerta').hasMatch(t)) p.tipos.add('jug_arco|');
   for (final e in _ligas.entries) {
     if (t.contains(' ${e.key} ')) p.ligas.add(e.value);
   }
@@ -150,7 +161,70 @@ List<Opcion> opciones(Pedido q) {
       }
     }
   }
-  return out.values.toList();
+  for (final o in _sueltas(q)) {
+    final k = '${o.clavePartido}|${o.patas.map((x) => x.titulo).join('+')}';
+    out.putIfAbsent(k, () => o);
+  }
+  final lista = out.values.toList();
+  if (q.tipos.isEmpty) return lista;
+  return lista.where((o) => o.patas.every((pa) => q.tipos.any((t) => _clavePata(pa).startsWith(t)))).toList();
+}
+
+String _clavePata(Pata pa) {
+  final l = (pa.sel['linea'] as num?)?.toDouble();
+  return '${pa.sel['mercado']}|${pa.sel['opcion']}|${l ?? ''}';
+}
+
+const _sueltasClaves = {
+  'doble|1X|': ('1X (local o empate)', 'Doble oportunidad'), 'doble|X2|': ('X2 (empate o visita)', 'Doble oportunidad'),
+  'doble|12|': ('12 (no hay empate)', 'Doble oportunidad'), 'goles|mas|0.5': ('Más de 0.5', 'Goles totales Más/Menos'),
+  'goles|mas|1.5': ('Más de 1.5', 'Goles totales Más/Menos'), 'goles|mas|2.5': ('Más de 2.5', 'Goles totales Más/Menos'),
+  'goles|menos|3.5': ('Menos de 3.5', 'Goles totales Más/Menos'), 'goles|menos|4.5': ('Menos de 4.5', 'Goles totales Más/Menos'),
+  'btts|si|': ('Sí', 'Ambos equipos anotan'), 'btts|no|': ('No', 'Ambos equipos anotan'),
+  'corners|mas|7.5': ('Más de 7.5', 'Más/Menos Córners'), 'corners|mas|8.5': ('Más de 8.5', 'Más/Menos Córners'),
+  'tarjetas|mas|2.5': ('Más de 2.5', 'Tarjetas Más/Menos'), 'tarjetas|mas|3.5': ('Más de 3.5', 'Tarjetas Más/Menos'),
+};
+
+/// Una pata por opción, con la probabilidad del bot para el partido y una cuota estimada (≈, verifícala en Betano).
+List<Opcion> _sueltas(Pedido q) {
+  final ahora = DateTime.now();
+  final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+  final minP = {'ultra': 0.80, 'segura': 0.72, 'equilibrada': 0.62}[q.nivel ?? 'equilibrada']!;
+  final out = <Opcion>[];
+  for (final m in repo.partidos) {
+    final ini = DateTime.tryParse('${m['inicio']}'.replaceAll(' ', 'T'));
+    if (ini == null || !ini.isAfter(ahora)) continue;
+    if (q.dia == 'hoy' && !ini.isBefore(hoy.add(const Duration(days: 1)))) continue;
+    if (q.dia == 'manana' && (ini.isBefore(hoy.add(const Duration(days: 1))) || !ini.isBefore(hoy.add(const Duration(days: 2))))) continue;
+    if (q.dia == 'finde' && ini.weekday < DateTime.saturday) continue;
+    if (q.ligas.isNotEmpty && !q.ligas.contains('${m['liga']}')) continue;
+    final local = Equipo.de(Map<String, dynamic>.from(m['local'])), visit = Equipo.de(Map<String, dynamic>.from(m['visitante']));
+    if (q.equipos.isNotEmpty && !q.equipos.any((e) => parecido(e, local.nombre) > 0.8 || parecido(e, visit.nombre) > 0.8)) continue;
+    final mer = Map<String, dynamic>.from(m['mercados'] ?? {});
+    final patas = <Pata>[];
+    _sueltasClaves.forEach((k, v) {
+      final p = (mer[k] as num?)?.toDouble();
+      if (p == null || p < minP || p > 0.985) return;
+      final c = k.split('|');
+      patas.add(Pata(v.$1, v.$2, corregir(c[0], p), {'mercado': c[0], 'opcion': c[1], 'linea': c[2].isEmpty ? null : double.parse(c[2])}));
+    });
+    for (final j in (m['jugadores'] as List? ?? [])) {
+      final k = (j['linea_min'] as num?)?.toInt() ?? 1;
+      final p = (j['p$k'] as num?)?.toDouble();
+      if (p == null || p < minP) continue;
+      patas.add(Pata('$k+', '${j['nombre']} Tiros al Arco', p,
+          {'mercado': 'jug_arco', 'opcion': '$k+', 'linea': k - 0.5, 'jugador_nombre': j['nombre'], 'lado': j['lado']}));
+    }
+    for (final pa in patas) {
+      final cuota = double.parse((1 / (pa.p * 1.06)).clamp(1.01, 50).toStringAsFixed(2));
+      if (cuota < 1.04) continue;
+      final l = Linea('suelta|${m['local']?['nombre']}|${pa.titulo}|${pa.mercado}', '${m['liga']}', '${m['liga_nombre'] ?? m['liga']}',
+          '${m['betano'] ?? 'https://www.betano.pe/sport/futbol/'}', ini, local, visit, [pa], {1: Sub(pa.p, cuota, true)},
+          cuota, pa.p, true, false, false, const []);
+      out.add(Opcion(l, 1, pa.p, cuota, true));
+    }
+  }
+  return out;
 }
 
 /// Máxima probabilidad conjunta que llega a la cuota [objetivo] con a lo sumo [maxN] partidos (uno por partido).
@@ -221,8 +295,15 @@ class Mensaje {
   final List<Opcion>? boleta;
   final LecturaCaptura? lectura;
   final double monto;
-  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10});
+  final List<(String, String)> investigar; // partidos (local, visitante) a buscar en internet después de responder
+  Mensaje(this.mio, this.texto, {this.boleta, this.lectura, this.monto = 10, this.investigar = const []});
 }
+
+List<(String, String)> _partidosDe(Set<String> equipos) => [
+      for (final m in repo.partidos)
+        if (equipos.any((e) => parecido(e, '${m['local']?['nombre']}') > 0.8 || parecido(e, '${m['visitante']?['nombre']}') > 0.8))
+          ('${m['local']?['nombre']}', '${m['visitante']?['nombre']}'),
+    ].take(3).toList();
 
 Future<Mensaje> responder(String texto) async {
   final t = ' ${normal(texto)} ';
@@ -255,7 +336,7 @@ Future<Mensaje> responder(String texto) async {
   }
   final q = entender(texto);
   if (RegExp(r'analiza|analisis|como ves|que opinas|pronostico').hasMatch(t) && q.equipos.isNotEmpty) {
-    return Mensaje(false, _analizar(q.equipos));
+    return Mensaje(false, _analizar(q.equipos), investigar: _partidosDe(q.equipos));
   }
   if (q.vacio && !RegExp(r'fija|combinada|boleta|apuesta|parley|pick').hasMatch(t)) {
     return Mensaje(false, 'No te entendí del todo 🤔. Prueba «3 fijas para hoy», «cuota 2 con 80%» o escribe «ayuda».');
@@ -349,6 +430,10 @@ String _extras(Map<String, dynamic> m) {
     b.writeln('Córners esperados ${e['corners']} (${e['corners_local']}-${e['corners_visitante']}) · Más 7.5 ${p('corners|mas|7.5')} · '
         'Más 8.5 ${p('corners|mas|8.5')}');
   }
+  for (final j in (m['jugadores'] as List? ?? []).take(3)) {
+    b.writeln('👟 ${j['nombre']}: tiro al arco 1+ ${j['p1'] == null ? '—' : pct((j['p1'] as num).toDouble())}'
+        '${j['p2'] != null ? ' · 2+ ${pct((j['p2'] as num).toDouble())}' : ''} (si es titular)');
+  }
   if (e['tarjetas'] != null) b.writeln('Tarjetas esperadas ${e['tarjetas']} · Más 2.5 ${p('tarjetas|mas|2.5')} · Más 3.5 ${p('tarjetas|mas|3.5')}');
   if (e['tiros_arco'] != null) {
     b.writeln('Tiros al arco esperados ${e['tiros_arco']} (${e['tiros_arco_local']}-${e['tiros_arco_visitante']}) · '
@@ -405,6 +490,7 @@ class _PantallaChatState extends State<PantallaChat> {
     setState(() => mensajes.add(Mensaje(true, texto)));
     final r = await responder(texto);
     setState(() => mensajes.add(r));
+    await _investigar(r.investigar);
     await Future.delayed(const Duration(milliseconds: 50));
     if (scroll.hasClients) scroll.animateTo(scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
@@ -429,9 +515,27 @@ class _PantallaChatState extends State<PantallaChat> {
       }
       final a = analizar(r);
       setState(() => mensajes.add(Mensaje(false, a.texto, lectura: r.patas.isEmpty ? null : r, monto: r.monto ?? 0)));
+      _bajar();
+      await _investigar([for (final pc in r.partidos) if (pc.local.isNotEmpty && pc.visitante.isNotEmpty) (pc.local, pc.visitante)]);
     } catch (e) {
       setState(() => mensajes.add(Mensaje(false, 'No pude leer la imagen ($e). Prueba con otra captura.')));
     }
+    _bajar();
+  }
+
+  /// Busca noticias y pronósticos del partido en internet y avisa mientras lo hace.
+  Future<void> _investigar(List<(String, String)> partidos) async {
+    if (partidos.isEmpty) return;
+    final lista = partidos.take(4).toList();
+    setState(() => mensajes.add(Mensaje(false, '🔎 Investigando en internet (noticias, pronósticos y bajas) de '
+        '${lista.length == 1 ? '${lista.first.$1} vs ${lista.first.$2}' : '${lista.length} partidos'}…')));
+    _bajar();
+    final partes = <String>[];
+    for (final (l, v) in lista) {
+      partes.add(resumenNoticias('$l vs $v', await buscarNoticias(l, v)));
+    }
+    if (!mounted) return;
+    setState(() => mensajes.add(Mensaje(false, partes.join('\n\n'))));
     _bajar();
   }
 
@@ -527,8 +631,7 @@ class _BoletaChatState extends State<BoletaChat> {
     return t.join('\n');
   }
 
-  Future<void> _guardar(String tipo) async {
-    await Historial.guardar({
+  Map<String, dynamic> _mapa(String tipo) => {
       'id': DateTime.now().millisecondsSinceEpoch, 'fecha': DateTime.now().toIso8601String(), 'tipo': tipo, 'origen': 'chat',
       'monto': tipo == 'apostada' ? monto : 0, 'cuota': _prod(activas.map((o) => o.cuota)), 'p': _prod(activas.map((o) => o.p)),
       'estado': 'pendiente',
@@ -538,8 +641,14 @@ class _BoletaChatState extends State<BoletaChat> {
             'visitante': o.linea.visitante.nombre, 'cuota': o.cuota, 'p': o.p,
             'patas': [for (final p in o.patas) {'titulo': p.titulo, 'mercado': p.mercado, 'sel': p.sel, 'p': p.p}]},
       ],
-    });
+    };
+
+  Future<void> _guardar(String tipo) async {
+    final nueva = await Historial.guardar(_mapa(tipo));
     setState(() => guardada = true);
+    if (!nueva && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya la tenías guardada: no la dupliqué.')));
+    }
   }
 
   @override
@@ -563,10 +672,8 @@ class _BoletaChatState extends State<BoletaChat> {
             icon: const Icon(Icons.check), label: Text(guardada ? 'Guardada' : 'La aposté')),
         OutlinedButton.icon(onPressed: guardada || activas.isEmpty ? null : () => _guardar('seguimiento'),
             icon: const Icon(Icons.visibility), label: const Text('Seguir')),
-        IconButton.filledTonal(tooltip: 'Copiar', icon: const Icon(Icons.copy), onPressed: () {
-          Clipboard.setData(ClipboardData(text: _texto()));
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copiada: pégala o arma la boleta en Betano.')));
-        }),
+        IconButton.filledTonal(tooltip: 'Compartir imagen', icon: const Icon(Icons.share),
+            onPressed: activas.isEmpty ? null : () => compartirBoleta(context, _mapa(monto > 0 ? 'apostada' : 'seguimiento'))),
         IconButton.filledTonal(tooltip: 'Abrir Betano', icon: const Icon(Icons.open_in_new),
             onPressed: () => abrir(activas.isEmpty ? 'https://www.betano.pe/sport/futbol/' : activas.first.linea.betano)),
       ]),
