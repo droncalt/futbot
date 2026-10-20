@@ -161,6 +161,12 @@ class _PantallaCapturasState extends State<PantallaCapturas> {
   Future<void> _guardar() async {
     final r = lectura;
     if (r == null || r.patas.isEmpty) return;
+    final m = double.tryParse(montoCtrl.text.replaceAll(',', '.')) ?? 0;
+    final problemas = LimitesBetano.revisar(selecciones: r.partidos.length, monto: m > 0 ? m : null);
+    if (problemas.isNotEmpty) {
+      setState(() => mensaje = '⛔ ${problemas.join(' ')}');
+      return;
+    }
     await guardarLectura(r,
         monto: double.tryParse(montoCtrl.text.replaceAll(',', '.')) ?? 0,
         cuotaManual: double.tryParse(cuotaCtrl.text.replaceAll(',', '.')),

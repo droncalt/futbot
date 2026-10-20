@@ -326,8 +326,17 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
     );
   }
 
+  /// Patas activas por partido (para el tope de 13 mercados por Bet Builder).
+  List<int> get _patasActivas => [
+        for (final l in lineas)
+          if (estados[l.id]!.on && estados[l.id]!.mask != 0)
+            List.generate(l.patas.length, (i) => (estados[l.id]!.mask >> i) & 1).fold<int>(0, (a, b) => a + b),
+      ];
+
   Widget _barraResumen(Calculo r) {
     final gan = monto * r.cuota;
+    final problemas = LimitesBetano.revisar(selecciones: r.n, monto: monto, patasPorPartido: _patasActivas);
+    final problemasSeguir = LimitesBetano.revisar(selecciones: r.n, patasPorPartido: _patasActivas);
     String mb = '';
     if (r.n >= 3 && r.mbOk && r.minCuota >= 1.5) {
       final p = repo.multibono['${r.n > 24 ? 24 : r.n}'] ?? 0;
@@ -368,8 +377,9 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
                 if (r.n > 0) Text('De cada 10 boletas así, ≈ ${((1 - r.p) * 10).round()} se caen.',
                     style: const TextStyle(color: Col.suave, fontSize: 11.5)),
                 if (mb.isNotEmpty) Text(mb, style: const TextStyle(color: Color(0xFF34D399), fontSize: 11.5)),
-                if (monto > 0 && monto < repo.apuestaMinima)
-                  Text('Mínimo en Betano: S/${f2(repo.apuestaMinima)}', style: const TextStyle(color: Col.rosa, fontSize: 11.5)),
+                if (r.n > 0)
+                  for (final x in problemas)
+                    Text('⛔ $x', style: const TextStyle(color: Col.rosa, fontSize: 11.5, fontWeight: FontWeight.w700)),
               ])),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 const Text('Ganancias potenciales', style: TextStyle(color: Col.suave, fontSize: 11.5)),
@@ -380,10 +390,11 @@ class _PantallaBoletaState extends State<PantallaBoleta> {
             Row(children: [
               Expanded(child: FilledButton.icon(
                 style: FilledButton.styleFrom(backgroundColor: Col.naranjaOsc),
-                onPressed: r.n == 0 ? null : () => _guardar('apostada'),
+                onPressed: r.n == 0 || problemas.isNotEmpty ? null : () => _guardar('apostada'),
                 icon: const Icon(Icons.check), label: const Text('La aposté'))),
               const SizedBox(width: 6),
-              IconButton.filledTonal(tooltip: 'Solo seguimiento', onPressed: r.n == 0 ? null : () => _guardar('seguimiento'),
+              IconButton.filledTonal(tooltip: 'Solo seguimiento',
+                  onPressed: r.n == 0 || problemasSeguir.isNotEmpty ? null : () => _guardar('seguimiento'),
                   icon: const Icon(Icons.visibility_outlined)),
               IconButton.filledTonal(tooltip: 'Compartir imagen', onPressed: r.n == 0 ? null : () => compartirBoleta(
                   context, _mapa(monto > 0 ? 'apostada' : 'seguimiento')), icon: const Icon(Icons.share)),

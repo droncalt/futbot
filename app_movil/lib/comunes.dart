@@ -92,3 +92,17 @@ String deCada10(double p) {
   final n = (p * 10).round();
   return n == 0 ? 'de cada 10 así, menos de 1 se gana' : n == 1 ? 'de cada 10 así, ≈1 se gana' : 'de cada 10 así, ≈$n se ganan';
 }
+
+/// Límites de Betano Perú (centro de ayuda + cupón real "3/30"): máximo 30 selecciones por cupón, un partido una sola
+/// vez (varias del mismo partido = un Bet Builder de 2 a 13 mercados), apuesta mínima S/0.50.
+class LimitesBetano {
+  static const maxSelecciones = 30, maxPatasBB = 13;
+  static double get minima => repo.apuestaMinima;
+
+  /// Problemas para apostar esta boleta en Betano (vacío = se puede). [monto] null = solo seguimiento.
+  static List<String> revisar({required int selecciones, double? monto, List<int> patasPorPartido = const []}) => [
+        if (selecciones > maxSelecciones) 'Betano permite máximo $maxSelecciones selecciones por cupón (tienes $selecciones).',
+        if (patasPorPartido.any((n) => n > maxPatasBB)) 'Un Bet Builder admite máximo $maxPatasBB mercados del mismo partido.',
+        if (monto != null && monto < minima) 'La apuesta mínima en Betano es S/${f2(minima)}.',
+      ];
+}

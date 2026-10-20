@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futbot/chat.dart';
+import 'package:futbot/comunes.dart';
 import 'package:futbot/datos.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -68,5 +69,13 @@ void main() {
       print('  ${o.partido}: ${o.patas.map((x) => '${x.titulo} ${x.mercado} ${(x.p * 100).round()}%').join(' + ')} → ${o.cuota}');
       expect(o.patas.every((x) => '${x.sel['mercado']}'.startsWith('corners') || '${x.sel['mercado']}'.contains('arco')), isTrue);
     }
+  });
+
+  test('límites de Betano', () async {
+    expect((await responder('dame 35 fijas para cuota 50')).texto, contains('máximo 30'));
+    expect(LimitesBetano.revisar(selecciones: 3, monto: 0.3), isNotEmpty);
+    expect(LimitesBetano.revisar(selecciones: 31), isNotEmpty);
+    expect(LimitesBetano.revisar(selecciones: 5, monto: 10, patasPorPartido: [3, 2]), isEmpty);
+    expect(LimitesBetano.revisar(selecciones: 1, patasPorPartido: [14]), isNotEmpty);
   });
 }

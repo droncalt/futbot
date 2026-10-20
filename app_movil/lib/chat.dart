@@ -492,8 +492,12 @@ Future<Mensaje> responder(String texto) async {
 }
 
 Mensaje _armar(Pedido q) {
+  if ((q.n ?? 0) > LimitesBetano.maxSelecciones) {
+    return Mensaje(false, 'Betano permite máximo ${LimitesBetano.maxSelecciones} selecciones por cupón. '
+        'Pídeme ${LimitesBetano.maxSelecciones} o menos.');
+  }
   final ops = opciones(q);
-  final monto = q.monto ?? 10;
+  final monto = math.max(q.monto ?? 10, LimitesBetano.minima);
   final filtro = [
     if (q.nivel != null) 'nivel ${q.nivel}',
     if (q.dia != null) q.dia == 'finde' ? 'fin de semana' : q.dia == 'manana' ? 'mañana' : 'hoy',
@@ -510,7 +514,9 @@ Mensaje _armar(Pedido q) {
   List<Opcion>? sel;
   final notas = <String>[];
   if (q.cuota != null) {
-    sel = mejorParaCuota(ops, q.cuota!, 20, exacto: q.n == null ? null : math.min(q.n!, 20));
+    // hasta 20 partidos (Betano admite 30 por cupón; cada Bet Builder cuenta como una selección)
+    sel = mejorParaCuota(ops, q.cuota!, math.min(20, LimitesBetano.maxSelecciones),
+        exacto: q.n == null ? null : math.min(q.n!, LimitesBetano.maxSelecciones));
     if (sel == null) {
       final todo = mejoresN(ops, 20, 1.0);
       return Mensaje(false, 'Con ${filtro.isEmpty ? 'lo disponible' : filtro} no llego a cuota ${f2(q.cuota!)}'
@@ -806,6 +812,8 @@ class _BoletaChatState extends State<BoletaChat> {
   @override
   Widget build(BuildContext context) {
     final c = _prod(activas.map((o) => o.cuota)), p = _prod(activas.map((o) => o.p));
+    final problemas = LimitesBetano.revisar(selecciones: activas.length, monto: monto,
+        patasPorPartido: [for (final o in activas) o.patas.length]);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 8),
       for (var i = 0; i < widget.opciones.length; i++) _fila(i),
@@ -820,7 +828,7 @@ class _BoletaChatState extends State<BoletaChat> {
       ]),
       const SizedBox(height: 6),
       Wrap(spacing: 6, runSpacing: 6, children: [
-        FilledButton.icon(onPressed: guardada || activas.isEmpty ? null : () => _guardar('apostada'),
+        FilledButton.icon(onPressed: guardada || activas.isEmpty || problemas.isNotEmpty ? null : () => _guardar('apostada'),
             icon: const Icon(Icons.check), label: Text(guardada ? 'Guardada' : 'La aposté')),
         OutlinedButton.icon(onPressed: guardada || activas.isEmpty ? null : () => _guardar('seguimiento'),
             icon: const Icon(Icons.visibility), label: const Text('Seguir')),
@@ -830,6 +838,7 @@ class _BoletaChatState extends State<BoletaChat> {
             onPressed: () => abrir(activas.isEmpty ? 'https://www.betano.pe/sport/futbol/' : activas.first.linea.betano)),
       ]),
       if (guardada) const Text('✅ En tu historial y en «En vivo»: la sigo minuto a minuto.', style: TextStyle(color: Color(0xFF34D399))),
+      for (final x in problemas) Text('⛔ $x', style: const TextStyle(color: Col.rosa, fontWeight: FontWeight.w700)),
     ]);
   }
 
@@ -884,7 +893,10 @@ class _AccionesCapturaState extends State<AccionesCaptura> {
   }
 
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  Widget build(BuildContext context) {
+    final monto = double.tryParse(montoCtrl.text.replaceAll(',', '.')) ?? 0;
+    final problemas = LimitesBetano.revisar(selecciones: widget.lectura.partidos.length, monto: monto);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 8),
         Wrap(spacing: 6, children: [
           ChoiceChip(label: const Text('Es mía'), selected: mia, onSelected: guardada ? null : (_) => setState(() => mia = true)),
@@ -895,11 +907,12 @@ class _AccionesCapturaState extends State<AccionesCaptura> {
         Row(children: [
           const Text('S/ '),
           SizedBox(width: 80, child: TextField(controller: montoCtrl, enabled: !guardada,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(isDense: true))),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(isDense: true),
+              onChanged: (_) => setState(() {}))),
         ]),
         const SizedBox(height: 6),
         Wrap(spacing: 6, runSpacing: 6, children: [
-          FilledButton.icon(onPressed: guardada ? null : () => _guardar(true), icon: const Icon(Icons.check),
+          FilledButton.icon(onPressed: guardada || problemas.isNotEmpty ? null : () => _guardar(true), icon: const Icon(Icons.check),
               label: Text(guardada ? 'Guardada' : 'La aposté')),
           OutlinedButton.icon(onPressed: guardada ? null : () => _guardar(false), icon: const Icon(Icons.visibility),
               label: const Text('Solo seguir')),
@@ -909,5 +922,7 @@ class _AccionesCapturaState extends State<AccionesCaptura> {
               icon: const Icon(Icons.edit), label: const Text('Corregir')),
         ]),
         if (guardada) const Text('✅ La sigo en «En vivo» y te digo si se cumplió o se perdió.', style: TextStyle(color: Color(0xFF34D399))),
+        if (!guardada) for (final x in problemas) Text('⛔ $x', style: const TextStyle(color: Col.rosa, fontSize: 12)),
       ]);
+  }
 }
